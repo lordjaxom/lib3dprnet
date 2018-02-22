@@ -15,8 +15,9 @@
 namespace prnet {
 
 namespace filesystem = PRNET_FILESYSTEM_NAMESPACE;
-#undef PRNET_FILESYSTEM_NAMESPACE
 
 } // namespace prnet
+
+#undef PRNET_FILESYSTEM_NAMESPACE
 
 #endif // LIB3DPRNET_CORE_FILESYSTEM_HPP

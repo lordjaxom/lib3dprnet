@@ -33,16 +33,16 @@ private:
 class model_ident
 {
 public:
-    model_ident( std::string printer, std::string name, std::string group );
+    model_ident( std::string printer, std::string group, std::string name );
 
     std::string const& printer() const { return printer_; }
-    std::string const& name() const { return name_; }
     std::string const& group() const { return group_; }
+    std::string const& name() const { return name_; }
 
 private:
     std::string printer_;
-    std::string name_;
     std::string group_;
+    std::string name_;
 };
 
 } // namespace rep

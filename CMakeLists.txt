@@ -6,10 +6,12 @@ set(CMAKE_CXX_STANDARD 14)
 find_package(Boost 1.66.0 COMPONENTS system coroutine REQUIRED)
 set(Boost_DEFINITIONS BOOST_COROUTINES_NO_DEPRECATION_WARNING)
 
-add_library(3dprnet SHARED
+add_library(3dprnet STATIC
         core/error.cpp
         core/error.hpp
         core/filesystem.hpp
+        core/optional.hpp
+        core/string_view.hpp
         repetier/types.cpp
         repetier/types.hpp
         repetier/upload.cpp
@@ -17,7 +19,12 @@ add_library(3dprnet SHARED
 target_compile_definitions(3dprnet PUBLIC ${Boost_DEFINITIONS})
 target_include_directories(3dprnet PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(3dprnet PUBLIC ${Boost_INCLUDE_DIRS})
-target_link_libraries(3dprnet ${Boost_LIBRARIES})
+
+add_executable(test_upload test/upload.cpp)
+target_compile_definitions(test_upload PRIVATE ${Boost_DEFINITIONS})
+target_include_directories(test_upload PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${Boost_INCLUDE_DIRS})
+target_link_libraries(test_upload 3dprnet)
+target_link_libraries(test_upload 3dprnet ${Boost_LIBRARIES})
 if (WIN32)
-    target_link_libraries(3dprnet ws2_32)
+    target_link_libraries(3dprnet stdc++fs ws2_32)
 endif()

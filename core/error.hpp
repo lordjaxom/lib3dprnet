@@ -7,17 +7,17 @@
 namespace prnet {
 
 /**
- * enum errc_t
+ * enum class errc
  */
 
-enum errc_t
+enum class errc : int
 {
-    example
+    server_error
 };
 
 
 /**
- * prnet_category
+ * function prnet_category
  */
 
 namespace detail {
@@ -35,6 +35,13 @@ public:
 
 std::error_category const& prnet_category();
 
+
+/**
+ * function make_error_code
+ */
+
+std::error_code make_error_code( errc e );
+
 } // namespace prnet
 
 
@@ -45,7 +52,7 @@ std::error_category const& prnet_category();
 namespace std {
 
 template<>
-struct is_error_code_enum< prnet::errc_t >
+struct is_error_code_enum< prnet::errc >
         : public std::true_type {};
 
 } // namespace std
