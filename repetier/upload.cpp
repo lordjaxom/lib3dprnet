@@ -1,6 +1,6 @@
 #include <ostream>
-#include <stdexcept>
 #include <unordered_map>
+#include <utility>
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/spawn.hpp>
@@ -57,9 +57,9 @@ class upload_body::value_type
 public:
     using fields_type = unordered_map< string_view, string_view >;
 
-    void set( string_view const& name, string_view const& value )
+    void set( string_view name, string_view value )
     {
-        fields_.emplace( name, value );
+        fields_.emplace( move( name ), move( value ) );
     }
 
     void set( filesystem::path const& path )
@@ -107,7 +107,7 @@ public:
         switch ( state_ ) {
             case 0: {
                 if ( field_ != body_.fields_.cend() ) {
-                    ostream os( &buffer_ );
+                    ostream os { &buffer_ };
                     os << "--" << boundary_ << "\r\n"
                        << "Content-Disposition: form-data; name=\"" << field_->first << "\"\r\n\r\n"
                        << field_->second << "\r\n";
@@ -122,7 +122,7 @@ public:
             case 1: {
                 ++state_;
                 if ( file_.is_open() ) {
-                    ostream os( &buffer_ );
+                    ostream os { &buffer_ };
                     os << "--" << boundary_ << "\r\n"
                        << "Content-Disposition: form-data; name=\"filename\"; filename=\"" << body_.path_->filename().string() << "\"\r\n"
                        << "Content-Type: application/octet-stream\r\n\r\n";
@@ -133,10 +133,10 @@ public:
 
             case 2: {
                 if ( file_.is_open() ) {
-                    auto buf = buffer_.prepare( blockSize );
+                    auto buf { buffer_.prepare( blockSize ) };
                     size_t read {};
-                    for ( auto it = buf.begin() ; it != buf.end() ; ++it ) {
-                        size_t r = file_.read( it->data(), it->size(), ec );
+                    for ( auto it { buf.begin() } ; it != buf.end() ; ++it ) {
+                        size_t r { file_.read( it->data(), it->size(), ec ) };
                         if ( r == 0 || ec ) {
                             break;
                         }
@@ -152,7 +152,7 @@ public:
             }
 
             case 3: {
-                ostream os( &buffer_ );
+                ostream os { &buffer_ };
                 os << "\r\n"
                    << "--" << boundary_ << "--\r\n";
             }
@@ -180,15 +180,12 @@ private:
 void upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
                    prnet::filesystem::path const& path, std::function< void ( std::error_code ) > handler )
 {
-    std::cerr << "spawn\n";
     asio::spawn( context, [&, handler { move( handler ) }]( auto yield ) {
         error_code ec;
         try {
-            std::cerr << "resolve\n";
             tcp::resolver resolver { context };
-            auto resolved = resolver.async_resolve( settings.host(), settings.port(), yield );
+            auto resolved { resolver.async_resolve( settings.host(), settings.port(), yield ) };
 
-            std::cerr << "connect\n";
             tcp::socket socket { context };
             asio::async_connect( socket, resolved, yield );
 
@@ -201,22 +198,17 @@ void upload_model( boost::asio::io_context& context, settings const& settings, m
             request.body().set( "group", ident.group() );
             request.body().set( path );
 
-            std::cerr << "send\n";
             http::async_write( socket, request, yield );
 
             boost::beast::multi_buffer buffer;
             http::response< http::dynamic_body > response;
-            std::cerr << "recv\n";
             http::async_read( socket, buffer, response, yield );
             if ( response.result() != http::status::ok && response.result() != http::status::no_content ) {
                 ec = make_error_code( errc::server_error );
             }
-            std::cerr << response << "\n";
         } catch ( system_error const& e ) {
-            std::cerr << "system_error\n";
             ec = e.code();
         } catch ( boost::beast::system_error const& e ) {
-            std::cerr << "beast error\n";
             ec = e.code();
         }
 
