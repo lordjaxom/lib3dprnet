@@ -114,7 +114,7 @@ void socket::send( request request )
         error_code ec;
         try {
             auto callbackId { ++lastCallbackId_ };
-            request.set( "callback_id", callbackId );
+            request.callback_id( callbackId );
 
             auto message { request.dump() };
 
