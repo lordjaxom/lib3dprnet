@@ -12,8 +12,9 @@ namespace detail {
 
 string prnet_category::message( int value ) const
 {
-    switch ( static_cast< errc >( value ) ) {
-        case errc::server_error: return "server error";
+    switch ( static_cast< prnet_errc >( value ) ) {
+        case prnet_errc::not_ok: return "server returned nok";
+        case prnet_errc::server_error: return "server side error";
     }
     return "unknown prnet::prnet_category error";
 }
@@ -31,7 +32,7 @@ error_category const& prnet_category()
  * function make_error_code
  */
 
-error_code make_error_code( errc e )
+error_code make_error_code( prnet_errc e )
 {
     return error_code( static_cast< int >( e ), prnet_category() );
 }

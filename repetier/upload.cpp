@@ -6,6 +6,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/core/error.hpp>
 #include <boost/beast/core/file.hpp>
 #include <boost/beast/core/multi_buffer.hpp>
 #include <boost/beast/http/dynamic_body.hpp>
@@ -59,7 +60,7 @@ public:
 
     void set( string_view name, string_view value )
     {
-        fields_.emplace( move( name ), move( value ) );
+        fields_.emplace( name, value );
     }
 
     void set( filesystem::path const& path )
@@ -79,7 +80,7 @@ private:
 
 class upload_body::writer
 {
-    static constexpr size_t blockSize = 8192;
+    static constexpr size_t blockSize { 8192 };
 
 public:
     using const_buffers_type = asio::streambuf::const_buffers_type;
@@ -104,6 +105,7 @@ public:
     {
         buffer_.consume( buffer_.size() );
 
+        bool more { true };
         switch ( state_ ) {
             case 0: {
                 if ( field_ != body_.fields_.cend() ) {
@@ -155,10 +157,11 @@ public:
                 ostream os { &buffer_ };
                 os << "\r\n"
                    << "--" << boundary_ << "--\r\n";
+                more = false;
             }
         }
 
-        return {{ buffer_.data(), state_ < 3 }};
+        return {{ buffer_.data(), more }};
     }
 
 private:
@@ -178,9 +181,9 @@ private:
  */
 
 void upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
-                   prnet::filesystem::path const& path, std::function< void ( std::error_code ) > handler )
+                   prnet::filesystem::path const& path, callback<> callback )
 {
-    asio::spawn( context, [&, handler { move( handler ) }]( auto yield ) {
+    asio::spawn( context, [&, callback { move( callback ) }]( auto yield ) {
         error_code ec;
         try {
             tcp::resolver resolver { context };
@@ -204,7 +207,7 @@ void upload_model( boost::asio::io_context& context, settings const& settings, m
             http::response< http::dynamic_body > response;
             http::async_read( socket, buffer, response, yield );
             if ( response.result() != http::status::ok && response.result() != http::status::no_content ) {
-                ec = make_error_code( errc::server_error );
+                ec = make_error_code( prnet_errc::server_error );
             }
         } catch ( system_error const& e ) {
             ec = e.code();
@@ -212,7 +215,7 @@ void upload_model( boost::asio::io_context& context, settings const& settings, m
             ec = e.code();
         }
 
-        handler( ec );
+        callback( ec );
     } );
 }
 

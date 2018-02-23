@@ -1,7 +1,9 @@
 #ifndef LIB3DPRNET_REPETIER_TYPES_HPP
 #define LIB3DPRNET_REPETIER_TYPES_HPP
 
+#include <functional>
 #include <string>
+#include <system_error>
 
 namespace prnet {
 namespace rep {
@@ -44,6 +46,14 @@ private:
     std::string group_;
     std::string name_;
 };
+
+
+/**
+ * typename callback
+ */
+
+template< typename ...Args >
+using callback = std::function< void ( Args..., std::error_code ) >;
 
 } // namespace rep
 } // namespace prnet

@@ -6,19 +6,17 @@
 #include <boost/asio/io_context.hpp>
 
 #include "core/filesystem.hpp"
+#include "types.hpp"
 
 namespace prnet {
 namespace rep {
-
-class settings;
-class model_ident;
 
 /**
  * function upload_model
  */
 
 void upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
-                   prnet::filesystem::path const& path, std::function< void ( std::error_code ) > handler );
+                   prnet::filesystem::path const& path, callback<> callback );
 
 } // namespace rep
 } // namespace prnet
