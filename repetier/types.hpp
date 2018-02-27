@@ -81,6 +81,7 @@ class PRNET_DLL group
 public:
     static bool defaultGroup( std::string const& name );
 
+    group();
     group( std::string name );
 
     std::string const& name() const { return name_; }

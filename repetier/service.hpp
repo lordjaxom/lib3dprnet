@@ -22,8 +22,8 @@ public:
     service( boost::asio::io_context& context, settings settings );
     ~service();
 
-    void list_printer( callback< std::vector< printer > > callback );
-    void list_groups( std::string printer, callback< std::vector< group > > callback );
+    void list_printer( callback< std::vector< printer > > cb );
+    void list_groups( std::string printer, callback< std::vector< group > > cb );
 
 private:
     void connect();

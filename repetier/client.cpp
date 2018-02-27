@@ -1,4 +1,4 @@
-#include <iostream> // FIXME
+#include <algorithm>
 #include <stdexcept>
 #include <unordered_map>
 
@@ -137,7 +137,7 @@ void client::close()
 
 void client::receive()
 {
-    asio::spawn( context_, [&]( auto yield ) {
+    asio::spawn( context_, [this]( auto yield ) {
         error_code ec;
         try {
             boost::beast::multi_buffer buffer;
@@ -163,40 +163,32 @@ void client::receive()
     } );
 }
 
-void client::handle_message( json const& message )
+void client::handle_message( json&& message )
 {
+    logger.debug( "handle_message" );
+
     if ( message.is_array() ) {
-        for ( auto const& item : message ) {
-            handle_message( item );
-        }
+        for_each( message.begin(), message.end(), [this]( auto& item ) { this->handle_message( move( item ) ); } );
         return;
     }
 
-    json::const_iterator callbackId;
-    if ( !message.is_object() ||
-            ( callbackId = message.find( "callback_id" ) ) == message.cend() ||
-            !callbackId->is_number() ) {
-        logger.error( "incoming message is not a valid object containing callback_id" );
-        throw system_error( make_error_code( prnet_errc::protocol_violation ) );
-    }
-    if ( *callbackId >= 0 ) {
-        this->handle_callback( static_cast< size_t >( *callbackId ), message );
+    logger.debug( "find callback_id" );
+    long callbackId { message[ "callbackId" ] };
+    if ( callbackId >= 0 ) {
+        handle_callback( static_cast< size_t >( callbackId ), move( message ) );
     }
 }
 
-void client::handle_callback( size_t callbackId, json const& message )
+void client::handle_callback( size_t callbackId, json&& message )
 {
+    logger.debug( "handle callback" );
     auto pending { pending_.find( callbackId ) };
     if ( pending == pending_.end() ) {
         logger.error( "spurious callback ", callbackId, " received" );
         return;
     }
-
-    auto data { message.find( "data" ) };
-    if ( data == message.cend() ) {
-        logger.error( "callback message ", callbackId, " does not contain valid data element" );
-    }
-    pending->second.handle( *data );
+    logger.debug( "handle pending" );
+    pending->second.handle( move( message[ "data" ] ) );
     pending_.erase( pending );
 }
 

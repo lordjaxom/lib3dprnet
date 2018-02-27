@@ -33,8 +33,8 @@ public:
 
 private:
     void receive();
-    void handle_message( nlohmann::json const& message );
-    void handle_callback( std::size_t callbackId, nlohmann::json const& message );
+    void handle_message( nlohmann::json&& message );
+    void handle_callback( std::size_t callbackId, nlohmann::json&& message );
 
     boost::asio::io_context& context_;
     error_callback errorCallback_;

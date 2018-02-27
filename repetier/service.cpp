@@ -35,21 +35,15 @@ void service::connect()
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 
-void service::list_printer( callback< vector< printer > > callback )
+void service::list_printer( callback< vector< printer > > cb )
 {
-    request request { "listPrinter", move( callback ) };
+    request request { "listPrinter", move( cb ) };
     send_or_queue( move( request ) );
 }
 
-void service::list_groups( std::string printer, callback< std::vector< group > > callback )
+void service::list_groups( string printer, callback< vector< group > > cb )
 {
-    request request { "listModelGroups", [callback { move( callback ) }]( auto const& data ) {
-        auto groupNames { data.find( "groupNames" ) };
-        if ( groupNames == data.end() || !groupNames->is_array() ) {
-            logger.error( "data object does not contain valid groupNames array" );
-            throw system_error( make_error_code( prnet_errc::protocol_violation ) );
-        }
-    } };
+    request request { "listModelGroups", [cb { move( cb ) }]( auto data ) { cb( move( data[ "groupNames" ] ) ); } };
     request.printer( move( printer ) );
     request.add_handler( request::check_ok_flag() );
     send_or_queue( move( request ) );

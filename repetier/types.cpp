@@ -69,6 +69,8 @@ bool group::defaultGroup( std::string const &name )
     return name == "#";
 }
 
+group::group() = default;
+
 group::group( std::string name )
         : name_ { move( name ) } {}
 

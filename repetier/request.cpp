@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <utility>
 
 #include <nlohmann/json.hpp>
@@ -19,30 +20,25 @@ static logger logger( "rep::request" );
  * class request
  */
 
-request::handler_type request::check_ok_flag()
+callback< json& > request::check_ok_flag()
 {
-    return []( auto const& message ) {
-        auto ok { message.find( "ok" ) };
-        if ( ok == message.cend() || !ok->is_boolean() ) {
-            logger.error( "callback message does not contain valid ok element" );
-            throw system_error( make_error_code( prnet_errc::protocol_violation ) );
-        }
-        if ( !*ok ) {
+    return []( auto& data ) {
+        if ( !data[ "ok" ] ) {
             throw system_error( make_error_code( prnet_errc::not_ok ) );
         }
     };
 }
 
-request::request( string action, callback<> callback )
-        : request( internal, move( action ), [callback { move( callback ) }]( auto const& ) { callback(); } ) {}
-
-request::request( internal_t, string&& action, callback< nlohmann::json const& >&& callback )
+request::request( string action, callback< json > cb )
         : message_ { { "action", move( action ) }, { "data", json::object() } }
-        , callback_ { move( callback ) } {}
+        , callback_ { move( cb ) } {}
+
+request::request( string action, callback<> cb )
+        : request { move( action ), [cb { move( cb ) }]( auto ) { cb(); } } {}
 
 request::~request() = default;
 
-void request::printer( std::string printer )
+void request::printer( string printer )
 {
     message_[ "printer" ] = move( printer );
 }
@@ -52,7 +48,7 @@ void request::callback_id( size_t id )
     message_[ "callback_id" ] = id;
 }
 
-void request::add_handler( handler_type handler )
+void request::add_handler( callback< json& > handler )
 {
     handlers_.push_back( move( handler ) );
 }
@@ -62,12 +58,12 @@ string request::dump() const
     return message_.dump();
 }
 
-void request::handle( json const& data ) const
+void request::handle( json data ) const
 {
-    for ( auto& handler : handlers_ ) {
-        handler( data );
-    }
-    callback_( data );
+    logger.debug( "handlers..." );
+    for_each( handlers_.cbegin(), handlers_.cend(), [&]( auto const& cb ) { cb( data ); } );
+    logger.debug( "callback..." );
+    callback_( move( data ) );
 }
 
 } // namespace rep

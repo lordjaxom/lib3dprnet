@@ -4,7 +4,6 @@
 #include <functional>
 #include <memory>
 #include <string>
-#include <system_error>
 #include <utility>
 #include <vector>
 
@@ -16,45 +15,18 @@
 namespace prnet {
 namespace rep {
 
-namespace detail {
-
-template< typename T >
-auto request_callback(
-        T&& callback,
-        std::enable_if_t< std::is_constructible< std::function< void () >, T >::value >* = nullptr )
-{
-    return [callback { std::forward( callback ) } ]( auto const& ) { callback(); };
-}
-
-template< typename T >
-auto request_callback( T&& callback )
-{
-    return [callback { std::forward< T >( callback ) } ]( auto const& data ) { callback( data ); };
-}
-
-} // namespace detail
-
 /**
  * class request
  */
 
 class PRNET_DLL request
 {
-    struct internal_t {};
-
-    static constexpr internal_t internal {};
-
 public:
-    using handler_type = std::function< void ( nlohmann::json const& ) >;
+    static callback< nlohmann::json& > check_ok_flag();
 
-    static handler_type check_ok_flag();
-
-    request( std::string action, callback<> callback );
+    request( std::string action, callback< nlohmann::json > cb );
+    request( std::string action, callback<> cb );
     ~request();
-
-    template< typename Callback >
-    request( std::string action, Callback callback )
-            : request( internal, std::move( action ), detail::request_callback( std::move( callback ) ) ) {}
 
     void printer( std::string printer );
     void callback_id( size_t id );
@@ -65,17 +37,15 @@ public:
         message_[ "data" ].emplace( std::move( key ), std::forward< T >( value ) );
     }
 
-    void add_handler( handler_type handler );
+    void add_handler( callback< nlohmann::json& > handler );
 
     std::string dump() const;
-    void handle( nlohmann::json const& data ) const;
+    void handle( nlohmann::json data ) const;
 
 private:
-    request( internal_t, std::string&& action, callback< nlohmann::json const& >&& callback );
-
     nlohmann::json message_;
-    std::vector< handler_type > handlers_;
-    callback< nlohmann::json const& > callback_;
+    std::vector< callback< nlohmann::json& > > handlers_;
+    callback< nlohmann::json > callback_;
 };
 
 } // namespace rep
