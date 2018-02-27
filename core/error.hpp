@@ -4,6 +4,8 @@
 #include <system_error>
 #include <type_traits>
 
+#include "config.hpp"
+
 namespace prnet {
 
 /**
@@ -13,7 +15,9 @@ namespace prnet {
 enum class prnet_errc : int
 {
     not_ok,
-    server_error
+    exception,
+    server_error,
+    protocol_violation
 };
 
 
@@ -23,7 +27,7 @@ enum class prnet_errc : int
 
 namespace detail {
 
-class prnet_category
+class PRNET_DLL prnet_category
         : public std::error_category
 {
 public:
@@ -34,14 +38,14 @@ public:
 
 } // namespace detail
 
-std::error_category const& prnet_category();
+std::error_category const& PRNET_DLL prnet_category();
 
 
 /**
  * function make_error_code
  */
 
-std::error_code make_error_code( prnet_errc e );
+std::error_code PRNET_DLL make_error_code( prnet_errc e );
 
 } // namespace prnet
 

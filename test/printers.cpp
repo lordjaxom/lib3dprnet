@@ -1,10 +1,7 @@
 #include <iostream>
 
 #include <boost/asio/io_context.hpp>
-#include <core/filesystem.hpp>
-#include <repetier/request.hpp>
-#include <repetier/client.hpp>
-#include <repetier/types.hpp>
+#include <repetier/service.hpp>
 
 using namespace std;
 using namespace prnet;
@@ -24,18 +21,11 @@ int main( int argc, char const* const argv[] )
 
     cout << "Connecting to " << settings.host() << ":" << settings.port() << endl;
 
-    rep::client socket( context, []( auto ec ) {
-        cout << "Connect or login failed: " << ec.message() << endl;
-    } );
-
-    socket.connect( settings, [&] {
-        cout << "Successfully logged in" << endl;
-
-        rep::request request { "ping", [&] {
-            cout << "Received pong" << endl;
-            socket.close();
-        } };
-        socket.send( move( request ) );
+    rep::service service { context, settings };
+    service.list_printer( []( auto printers ) {
+        for ( auto const& printer : printers ) {
+            cout << printer.name() << " " << printer.slug() << endl;
+        }
     } );
 
     context.run();

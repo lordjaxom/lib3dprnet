@@ -3,12 +3,17 @@
 #include <nlohmann/json.hpp>
 
 #include "core/error.hpp"
+#include "core/logging.hpp"
 #include "request.hpp"
+#include "types.hpp"
 
 using namespace std;
+using namespace nlohmann;
 
 namespace prnet {
 namespace rep {
+
+static logger logger( "rep::request" );
 
 /**
  * class request
@@ -16,55 +21,53 @@ namespace rep {
 
 request::handler_type request::check_ok_flag()
 {
-    return []( auto const& json, auto& ec ) {
-        if ( !json[ "data" ][ "ok" ] ) {
-            ec = make_error_code( prnet_errc::not_ok );
+    return []( auto const& message ) {
+        auto ok { message.find( "ok" ) };
+        if ( ok == message.cend() || !ok->is_boolean() ) {
+            logger.error( "callback message does not contain valid ok element" );
+            throw system_error( make_error_code( prnet_errc::protocol_violation ) );
+        }
+        if ( !*ok ) {
+            throw system_error( make_error_code( prnet_errc::not_ok ) );
         }
     };
 }
 
 request::request( string action, callback<> callback )
-        : request( move( action ), [callback { move( callback ) }]( auto json, auto ec ) { callback( ec ); } ) {}
+        : request( internal, move( action ), [callback { move( callback ) }]( auto const& ) { callback(); } ) {}
 
-request::request( string action, callback< nlohmann::json > callback )
-        : json_ { { "action", move( action ) } }
+request::request( internal_t, string&& action, callback< nlohmann::json const& >&& callback )
+        : message_ { { "action", move( action ) }, { "data", json::object() } }
         , callback_ { move( callback ) } {}
 
 request::~request() = default;
 
 void request::printer( std::string printer )
 {
-    json_[ "printer" ] = move( printer );
+    message_[ "printer" ] = move( printer );
 }
 
 void request::callback_id( size_t id )
 {
-    json_[ "callback_id" ] = id;
+    message_[ "callback_id" ] = id;
 }
 
-void request::add_handler( request::handler_type handler )
+void request::add_handler( handler_type handler )
 {
     handlers_.push_back( move( handler ) );
 }
 
 string request::dump() const
 {
-    return json_.dump();
+    return message_.dump();
 }
 
-void request::handle( nlohmann::json json ) const
+void request::handle( json const& data ) const
 {
-    error_code ec;
-    find_if( handlers_.cbegin(), handlers_.cend(), [&]( auto const& handler ) {
-        handler( json, ec );
-        return ec;
-    } );
-    callback_( move( json ), ec );
-}
-
-void request::error( error_code ec ) const
-{
-    callback_( {}, ec );
+    for ( auto& handler : handlers_ ) {
+        handler( data );
+    }
+    callback_( data );
 }
 
 } // namespace rep
