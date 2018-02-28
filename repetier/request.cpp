@@ -60,9 +60,7 @@ string request::dump() const
 
 void request::handle( json data ) const
 {
-    logger.debug( "handlers..." );
     for_each( handlers_.cbegin(), handlers_.cend(), [&]( auto const& cb ) { cb( data ); } );
-    logger.debug( "callback..." );
     callback_( move( data ) );
 }
 

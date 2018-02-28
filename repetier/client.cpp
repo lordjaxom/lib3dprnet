@@ -64,9 +64,9 @@ void client::connect( settings const& settings, callback<> callback )
         throw invalid_argument( "rep::client already connected" );
     }
     socket_ = make_unique< socket_impl >( context_ );
+    closing_ = false;
 
     asio::spawn( context_, [&, callback { move( callback ) }]( auto yield ) mutable {
-        error_code ec;
         try {
             logger.info( "connecting to ", settings.host(), ":", settings.port() );
 
@@ -85,12 +85,9 @@ void client::connect( settings const& settings, callback<> callback )
 
             this->receive();
         } catch ( system_error const& e ) {
-            ec = e.code();
+            errorCallback_( e.code() );
         } catch ( boost::beast::system_error const& e ) {
-            ec = e.code();
-        }
-        if ( ec ) {
-            errorCallback_( ec );
+            errorCallback_( e.code() );
         }
     } );
 }
@@ -98,7 +95,6 @@ void client::connect( settings const& settings, callback<> callback )
 void client::send( request request )
 {
     asio::spawn( context_, [&, request { move( request ) }] ( auto yield ) mutable {
-        error_code ec;
         try {
             auto callbackId { ++lastCallbackId_ };
             request.callback_id( callbackId );
@@ -110,12 +106,9 @@ void client::send( request request )
             ( *socket_  )->async_write( asio::buffer( message ), yield );
             pending_.emplace( callbackId, move( request ) );
         } catch ( system_error const& e ) {
-            ec = e.code();
+            errorCallback_( e.code() );
         } catch ( boost::beast::system_error const& e ) {
-            ec = e.code();
-        }
-        if ( ec ) {
-            errorCallback_( ec );
+            errorCallback_( e.code() );
         }
     } );
 }
@@ -126,17 +119,24 @@ void client::close()
         logger.info( "closing connection to server" );
 
         try {
+            closing_ = true;
             ( *socket_ )->async_close( websocket::close_code::normal, yield );
-            logger.debug( "destroying socket" );
-            socket_ = nullptr;
-        } catch ( exception const& e ) {
-            logger.error( "caught while closing: ", e.what() );
+        } catch ( system_error const& e ) {
+            // ignore
+        } catch ( boost::beast::system_error const& e ) {
+            // ignore
         }
+        logger.debug( "destroying socket" );
+        socket_ = nullptr;
     } );
 }
 
 void client::receive()
 {
+    if ( closing_ ) {
+        return;
+    }
+
     asio::spawn( context_, [this]( auto yield ) {
         error_code ec;
         try {
@@ -151,43 +151,39 @@ void client::receive()
             this->handle_message( json::parse( message ) );
             this->receive();
         } catch ( system_error const& e ) {
-            ec = e.code();
+            errorCallback_( e.code() );
         } catch ( boost::beast::system_error const& e ) {
-            ec = e.code();
-        } catch ( exception const& e ) {
-            ec = make_error_code( prnet_errc::exception );
-        }
-        if ( ec ) {
-            errorCallback_( ec );
+            if ( e.code() == make_error_code( boost::asio::error::operation_aborted ) && closing_ ) {
+                return;
+            }
+            errorCallback_( e.code() );
+        } catch ( json::exception const& e ) {
+            logger.error( "protocol violation in message from server: ", e.what() );
+            errorCallback_( make_error_code( prnet_errc::protocol_violation ) );
         }
     } );
 }
 
 void client::handle_message( json&& message )
 {
-    logger.debug( "handle_message" );
-
     if ( message.is_array() ) {
         for_each( message.begin(), message.end(), [this]( auto& item ) { this->handle_message( move( item ) ); } );
         return;
     }
 
-    logger.debug( "find callback_id" );
-    long callbackId { message[ "callbackId" ] };
+    long callbackId{ message[ "callback_id" ] };
     if ( callbackId >= 0 ) {
-        handle_callback( static_cast< size_t >( callbackId ), move( message ) );
+        handle_callback( static_cast< size_t >( callbackId ), move( message ));
     }
 }
 
 void client::handle_callback( size_t callbackId, json&& message )
 {
-    logger.debug( "handle callback" );
     auto pending { pending_.find( callbackId ) };
     if ( pending == pending_.end() ) {
         logger.error( "spurious callback ", callbackId, " received" );
         return;
     }
-    logger.debug( "handle pending" );
     pending->second.handle( move( message[ "data" ] ) );
     pending_.erase( pending );
 }

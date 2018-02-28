@@ -41,6 +41,7 @@ private:
     std::unique_ptr< socket_impl > socket_;
     std::unordered_map< std::size_t, request > pending_;
     std::size_t lastCallbackId_ {};
+    bool closing_;
 };
 
 } // namespace rep

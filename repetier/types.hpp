@@ -57,7 +57,7 @@ private:
 class PRNET_DLL printer
 {
 public:
-    printer();
+    printer(); // for from_json
     printer( bool active, std::string name, std::string slug );
 
     bool active() const { return active_; }
@@ -70,7 +70,7 @@ private:
     std::string slug_;
 };
 
-void from_json( nlohmann::json const& json, printer& printer );
+void from_json( nlohmann::json const& data, printer& printer );
 
 /**
  * class group
@@ -81,7 +81,7 @@ class PRNET_DLL group
 public:
     static bool defaultGroup( std::string const& name );
 
-    group();
+    group(); // for from_json
     group( std::string name );
 
     std::string const& name() const { return name_; }
@@ -91,7 +91,7 @@ private:
     std::string name_;
 };
 
-void from_json( nlohmann::json const& json, group& group );
+void from_json( nlohmann::json const& data, group& group );
 
 } // namespace rep
 } // namespace prnet

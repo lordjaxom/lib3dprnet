@@ -45,19 +45,9 @@ printer::printer( bool active, std::string name, std::string slug )
         , name_ { move( name ) }
         , slug_ { move( slug ) } {}
 
-void from_json( json const& json, printer& printer )
+void from_json( json const& data, printer& printer )
 {
-    auto active { json.find( "active" ) };
-    auto name { json.find( "name" ) };
-    auto slug { json.find( "slug" ) };
-
-    if ( active == json.cend() || !active->is_boolean() ||
-            name == json.cend() || !name->is_string() ||
-            slug == json.cend() || !slug->is_string() ) {
-        logger.error( "invalid printer object" );
-        throw system_error( make_error_code( prnet_errc::protocol_violation ) );
-    }
-    printer = { json[ "active" ], json[ "name" ], json[ "slug" ] };
+    printer = { data[ "active" ], data[ "name" ], data[ "slug" ] };
 }
 
 /**
@@ -74,11 +64,9 @@ group::group() = default;
 group::group( std::string name )
         : name_ { move( name ) } {}
 
-void from_json( json const& json, group& group )
+void from_json( json const& data, group& group )
 {
-    if ( !json.is_string() ) {
-        logger.error( "invalid group name" );
-    }
+    group = { data.get< string >() };
 }
 
 } // namespace rep
