@@ -27,7 +27,8 @@ public:
 
 private:
     void connect();
-    void send_or_queue( request&& request );
+    void send( request&& req );
+    void send_next();
 
     void handle_connected();
     bool handle_error( std::error_code ec );
@@ -36,6 +37,7 @@ private:
     settings settings_;
     std::unique_ptr< client > client_;
     bool connected_ {};
+    bool pending_ {};
     std::list< request > queued_;
 };
 

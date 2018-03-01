@@ -58,7 +58,7 @@ client::client( asio::io_context& context, error_callback errorCallback )
 
 client::~client() = default;
 
-void client::connect( settings const& settings, callback<> callback )
+void client::connect( settings const& settings, callback<> cb )
 {
     if ( socket_ ) {
         throw invalid_argument( "rep::client already connected" );
@@ -66,7 +66,7 @@ void client::connect( settings const& settings, callback<> callback )
     socket_ = make_unique< socket_impl >( context_ );
     closing_ = false;
 
-    asio::spawn( context_, [&, callback { move( callback ) }]( auto yield ) mutable {
+    asio::spawn( context_, [&, cb { move( cb ) }]( auto yield ) mutable {
         try {
             logger.info( "connecting to ", settings.host(), ":", settings.port() );
 
@@ -78,10 +78,10 @@ void client::connect( settings const& settings, callback<> callback )
 
             logger.debug( "connection successful, sending login request" );
 
-            request request( "login", move( callback ) );
-            request.set( "apikey", settings.apikey() );
-            request.add_handler( request::check_ok_flag() );
-            this->send( move( request ) );
+            request req( "login", move( cb ) );
+            req.set( "apikey", settings.apikey() );
+            req.add_handler( request::check_ok_flag() );
+            this->send( move( req ) );
 
             this->receive();
         } catch ( system_error const& e ) {
@@ -92,19 +92,19 @@ void client::connect( settings const& settings, callback<> callback )
     } );
 }
 
-void client::send( request request )
+void client::send( request req )
 {
-    asio::spawn( context_, [&, request { move( request ) }] ( auto yield ) mutable {
+    asio::spawn( context_, [&, req { move( req ) }] ( auto yield ) mutable {
         try {
             auto callbackId { ++lastCallbackId_ };
-            request.callback_id( callbackId );
+            req.callback_id( callbackId );
 
-            auto message { request.dump() };
+            auto message { req.dump() };
 
             logger.debug( ">>> ", message );
 
             ( *socket_  )->async_write( asio::buffer( message ), yield );
-            pending_.emplace( callbackId, move( request ) );
+            pending_.emplace( callbackId, move( req ) );
         } catch ( system_error const& e ) {
             errorCallback_( e.code() );
         } catch ( boost::beast::system_error const& e ) {

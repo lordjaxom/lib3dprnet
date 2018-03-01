@@ -30,7 +30,6 @@ int main( int argc, char const* const argv[] )
                     cout << "GROUP FOR PRINTER: " << printer.name() << " - " << group.name() << endl;
                 }
             } );
-            break;
         }
     } );
 

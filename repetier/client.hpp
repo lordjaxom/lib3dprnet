@@ -6,6 +6,7 @@
 #include <unordered_map>
 
 #include <boost/asio/io_context.hpp>
+#include <boost/asio/io_context_strand.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include "core/config.hpp"
@@ -27,8 +28,8 @@ public:
     explicit client( boost::asio::io_context& context, error_callback errorCallback );
     ~client();
 
-    void connect( settings const& settings, callback<> callback );
-    void send( request request );
+    void connect( settings const& settings, callback<> cb );
+    void send( request req );
     void close();
 
 private:

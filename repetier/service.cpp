@@ -27,6 +27,20 @@ service::service( boost::asio::io_context &context, settings settings )
 
 service::~service() = default;
 
+void service::list_printer( callback< vector< printer > > cb )
+{
+    request request { "listPrinter", move( cb ) };
+    send( move( request ) );
+}
+
+void service::list_groups( string printer, callback< vector< group > > cb )
+{
+    request request { "listModelGroups", [cb { move( cb ) }]( auto data ) { cb( move( data[ "groupNames" ] ) ); } };
+    request.printer( move( printer ) );
+    request.add_handler( request::check_ok_flag() );
+    send( move( request ) );
+}
+
 void service::connect()
 {
     logger.info( "initiating connection to server" );
@@ -35,27 +49,26 @@ void service::connect()
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 
-void service::list_printer( callback< vector< printer > > cb )
+void service::send( request&& req )
 {
-    request request { "listPrinter", move( cb ) };
-    send_or_queue( move( request ) );
+    req.add_handler( [this]( auto& ) { pending_ = false; this->send_next(); } );
+    queued_.push_back( move( req ) );
+    send_next();
 }
 
-void service::list_groups( string printer, callback< vector< group > > cb )
+void service::send_next()
 {
-    request request { "listModelGroups", [cb { move( cb ) }]( auto data ) { cb( move( data[ "groupNames" ] ) ); } };
-    request.printer( move( printer ) );
-    request.add_handler( request::check_ok_flag() );
-    send_or_queue( move( request ) );
+    if ( !queued_.empty() && connected_ && !pending_ ) {
+        client_->send( move( queued_.front() ) );
+        queued_.pop_front();
+        pending_ = true;
+    }
 }
 
 void service::handle_connected()
 {
     connected_ = true;
-    while ( !queued_.empty() ) {
-        client_->send( move( queued_.front() ) );
-        queued_.pop_front();
-    }
+    send_next();
 }
 
 bool service::handle_error( std::error_code ec )
@@ -72,15 +85,6 @@ bool service::handle_error( std::error_code ec )
     auto timer = make_shared< asio::deadline_timer >( context_, boost::posix_time::seconds( 5 ) );
     timer->async_wait( [this, timer]( auto ec ) { this->connect(); } );
     return false;
-}
-
-void service::send_or_queue( request&& request )
-{
-    if ( connected_ ) {
-        client_->send( move( request ) );
-    } else {
-        queued_.push_back( move( request ) );
-    }
 }
 
 } // namespace rep
