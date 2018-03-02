@@ -1,5 +1,0 @@
-set(BOOST_ROOT "C:/Users/lordjaxom/Programme/boost_1_66_0")
-set(BEAST_ROOT "C:/Users/lordjaxom/Programme/beast-master")
-set(JSON_ROOT "C:/Users/lordjaxom/Programme/json-master")
-
-set(Boost_USE_STATIC_LIBS ON)
