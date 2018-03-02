@@ -25,22 +25,28 @@ class PRNET_DLL client
     struct socket_impl;
 
 public:
-    explicit client( boost::asio::io_context& context, error_callback errorCallback );
+    using event_callback = callback< std::string, nlohmann::json >;
+
+    client( boost::asio::io_context& context, error_callback cb );
     ~client();
 
     void connect( settings const& settings, callback<> cb );
     void send( request req );
     void close();
 
+    void subscribe( std::string event, event_callback cb );
+
 private:
     void receive();
     void handle_message( nlohmann::json&& message );
-    void handle_callback( std::size_t callbackId, nlohmann::json&& message );
+    void handle_callback( std::size_t callbackId, nlohmann::json&& data );
+    void handle_event( nlohmann::json&& event );
 
     boost::asio::io_context& context_;
     error_callback errorCallback_;
     std::unique_ptr< socket_impl > socket_;
     std::unordered_map< std::size_t, request > pending_;
+    std::unordered_map< std::string, event_callback > subscriptions_;
     std::size_t lastCallbackId_ {};
     bool closing_;
 };

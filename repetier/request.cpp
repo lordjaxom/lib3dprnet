@@ -33,9 +33,6 @@ request::request( string action, callback< json > cb )
         : message_ { { "action", move( action ) }, { "data", json::object() } }
         , callback_ { move( cb ) } {}
 
-request::request( string action, callback<> cb )
-        : request { move( action ), [cb { move( cb ) }]( auto ) { cb(); } } {}
-
 request::~request() = default;
 
 void request::printer( string printer )

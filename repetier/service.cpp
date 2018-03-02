@@ -46,6 +46,9 @@ void service::connect()
     logger.info( "initiating connection to server" );
 
     client_ = make_unique< client >( context_, [this]( auto ec ) { this->handle_error( ec ); } );
+    client_->subscribe( "jobStarted", [this]( auto printer, auto ) { job_started( move( printer ) ); } );
+    client_->subscribe( "jobFinished", [this]( auto printer, auto ) { job_finished( move( printer ) ); } );
+    client_->subscribe( "jobKilled", [this]( auto printer, auto ) { job_killed( move( printer ) ); } );
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 

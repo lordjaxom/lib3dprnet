@@ -31,7 +31,7 @@ int main( int argc, char const* const argv[] )
     socket.connect( settings, [&] {
         cout << "Successfully logged in" << endl;
 
-        rep::request request { "ping", [&] {
+        rep::request request { "ping", [&]( auto ) {
             cout << "Received pong" << endl;
             socket.close();
         } };

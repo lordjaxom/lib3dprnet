@@ -25,7 +25,6 @@ public:
     static callback< nlohmann::json& > check_ok_flag();
 
     request( std::string action, callback< nlohmann::json > cb );
-    request( std::string action, callback<> cb );
     ~request();
 
     void printer( std::string printer );

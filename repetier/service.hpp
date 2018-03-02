@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <boost/asio/io_context.hpp>
+#include <boost/signals2/signal.hpp>
 
 #include "core/config.hpp"
 #include "forward.hpp"
@@ -16,14 +17,27 @@
 namespace prnet {
 namespace rep {
 
+template< typename ...Args >
+using event = boost::signals2::signal< void ( Args... ) >;
+
+/**
+ * class service
+ */
+
 class PRNET_DLL service
 {
 public:
+    using job_event = event< std::string >;
+
     service( boost::asio::io_context& context, settings settings );
     ~service();
 
     void list_printer( callback< std::vector< printer > > cb );
     void list_groups( std::string printer, callback< std::vector< group > > cb );
+
+    job_event job_started;
+    job_event job_finished;
+    job_event job_killed;
 
 private:
     void connect();

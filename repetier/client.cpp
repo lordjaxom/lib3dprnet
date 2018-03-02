@@ -78,7 +78,7 @@ void client::connect( settings const& settings, callback<> cb )
 
             logger.debug( "connection successful, sending login request" );
 
-            request req( "login", move( cb ) );
+            request req { "login", [cb { move( cb ) }]( auto ) { cb(); } };
             req.set( "apikey", settings.apikey() );
             req.add_handler( request::check_ok_flag() );
             this->send( move( req ) );
@@ -131,6 +131,11 @@ void client::close()
     } );
 }
 
+void client::subscribe( string event, event_callback cb )
+{
+    subscriptions_.emplace( move( event ), move( cb ) );
+}
+
 void client::receive()
 {
     if ( closing_ ) {
@@ -171,21 +176,33 @@ void client::handle_message( json&& message )
         return;
     }
 
-    long callbackId{ message[ "callback_id" ] };
+    long callbackId { message[ "callback_id" ] };
+    auto& data { message[ "data" ] };
     if ( callbackId >= 0 ) {
-        handle_callback( static_cast< size_t >( callbackId ), move( message ));
+        handle_callback( static_cast< size_t >( callbackId ), move( data ) );
+    } else if ( message[ "eventList" ] ) {
+        for_each( data.begin(), data.end(), [this]( auto& event ) { this->handle_event( move( event ) ); } );
     }
 }
 
-void client::handle_callback( size_t callbackId, json&& message )
+void client::handle_callback( size_t callbackId, json&& data )
 {
     auto pending { pending_.find( callbackId ) };
     if ( pending == pending_.end() ) {
         logger.error( "spurious callback ", callbackId, " received" );
         return;
     }
-    pending->second.handle( move( message[ "data" ] ) );
+    pending->second.handle( move( data ) );
     pending_.erase( pending );
+}
+
+void client::handle_event( json&& event )
+{
+    auto& type { event[ "event" ] };
+    auto subscription { subscriptions_.find( type ) };
+    if ( subscription != subscriptions_.end() ) {
+        subscription->second( move( event[ "printer" ] ), move( event[ "data" ] ) );
+    }
 }
 
 } // namespace rep
