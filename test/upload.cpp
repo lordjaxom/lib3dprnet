@@ -1,7 +1,9 @@
 #include <iostream>
 
 #include <boost/asio/io_context.hpp>
+
 #include <core/filesystem.hpp>
+#include <core/logging.hpp>
 #include <repetier/types.hpp>
 #include <repetier/upload.hpp>
 
@@ -12,6 +14,8 @@ namespace asio = boost::asio;
 
 int main( int argc, char const* const argv[] )
 {
+    logger::threshold( logger::Debug );
+
     if ( argc != 7 ) {
         std::cerr << "Usage: " << argv[ 0 ] << " <host> <port> <apikey> <printer> <model> <filename>";
         return 1;

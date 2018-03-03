@@ -93,6 +93,32 @@ private:
 
 void from_json( nlohmann::json const& data, group& group );
 
+
+/**
+ * class temperature
+ */
+
+class PRNET_DLL temperature_info
+{
+public:
+    temperature_info(); // for from_json
+    temperature_info( int controller, double wanted, double actual );
+
+    bool heatbed() const { return controller_ == -1; }
+    int extruder() const { return controller_; }
+    double wanted() const { return wanted_; }
+    double actual() const { return actual_; }
+
+    std::string controller_name() const;
+
+private:
+    int controller_ {};
+    double wanted_ {};
+    double actual_ {};
+};
+
+void from_json( nlohmann::json const& data, temperature_info& temperature );
+
 } // namespace rep
 } // namespace prnet
 

@@ -49,6 +49,7 @@ void service::connect()
     client_->subscribe( "jobStarted", [this]( auto printer, auto ) { job_started( move( printer ) ); } );
     client_->subscribe( "jobFinished", [this]( auto printer, auto ) { job_finished( move( printer ) ); } );
     client_->subscribe( "jobKilled", [this]( auto printer, auto ) { job_killed( move( printer ) ); } );
+    client_->subscribe( "temp", [this]( auto printer, auto data ) { temperature( move( printer ), move( data ) ); } );
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 

@@ -69,5 +69,30 @@ void from_json( json const& data, group& group )
     group = { data.get< string >() };
 }
 
+
+/**
+ * class temperature
+ */
+
+temperature_info::temperature_info() = default;
+
+temperature_info::temperature_info( int controller, double wanted, double actual )
+        : controller_ { controller }
+        , wanted_ { wanted }
+        , actual_ { actual } {}
+
+string temperature_info::controller_name() const
+{
+    if ( controller_ == -1 ) {
+        return "bed";
+    }
+    return "e" + to_string( controller_ );
+}
+
+void from_json( json const &data, temperature_info &temperature )
+{
+    temperature = { data[ "id" ], data[ "S" ], data[ "T" ] };
+}
+
 } // namespace rep
 } // namespace prnet

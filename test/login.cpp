@@ -1,7 +1,9 @@
 #include <iostream>
 
 #include <boost/asio/io_context.hpp>
+
 #include <core/filesystem.hpp>
+#include <core/logging.hpp>
 #include <repetier/request.hpp>
 #include <repetier/client.hpp>
 #include <repetier/types.hpp>
@@ -13,6 +15,8 @@ namespace asio = boost::asio;
 
 int main( int argc, char const* const argv[] )
 {
+    logger::threshold( logger::Debug );
+
     if ( argc != 4 ) {
         cerr << "Usage: " << argv[ 0 ] << " <host> <port> <apikey>";
         return 1;

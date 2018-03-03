@@ -69,7 +69,7 @@ logger::level const logger::Info    { "INFO ", 2 };
 logger::level const logger::Warning { "WARN ", 1 };
 logger::level const logger::Error   { "ERROR", 0 };
 
-logger::level const* logger::level_ = &logger::Debug;
+logger::level const* logger::level_ = &logger::Warning;
 shared_ptr< ostream > logger::output_( &cerr, []( ostream const* ) {} );
 
 bool logger::is( level const& level )

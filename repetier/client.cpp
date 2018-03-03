@@ -126,7 +126,6 @@ void client::close()
         } catch ( boost::beast::system_error const& e ) {
             // ignore
         }
-        logger.debug( "destroying socket" );
         socket_ = nullptr;
     } );
 }

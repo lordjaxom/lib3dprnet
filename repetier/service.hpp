@@ -28,6 +28,7 @@ class PRNET_DLL service
 {
 public:
     using job_event = event< std::string >;
+    using temperature_event = event< std::string, temperature_info >;
 
     service( boost::asio::io_context& context, settings settings );
     ~service();
@@ -38,6 +39,7 @@ public:
     job_event job_started;
     job_event job_finished;
     job_event job_killed;
+    temperature_event temperature;
 
 private:
     void connect();
