@@ -40,14 +40,13 @@ model_ident::model_ident( std::string printer, std::string name, std::string gro
 
 printer::printer() = default;
 
-printer::printer( bool active, std::string name, std::string slug )
-        : active_ { active }
-        , name_ { move( name ) }
-        , slug_ { move( slug ) } {}
-
-void from_json( json const& data, printer& printer )
+void from_json( json const& src, printer& dst )
 {
-    printer = { data[ "active" ], data[ "name" ], data[ "slug" ] };
+    dst.active_ = src.at( "active" );
+    dst.name_ = src.at( "name" );
+    dst.slug_ = src.at( "slug" );
+    dst.online_ = src.at( "online" ) != 0;
+    dst.job_ = src.at( "job" );
 }
 
 /**
@@ -61,12 +60,9 @@ bool group::defaultGroup( std::string const &name )
 
 group::group() = default;
 
-group::group( std::string name )
-        : name_ { move( name ) } {}
-
-void from_json( json const& data, group& group )
+void from_json( json const& src, group& dst )
 {
-    group = { data.get< string >() };
+    dst.name_ = src;
 }
 
 
@@ -74,14 +70,9 @@ void from_json( json const& data, group& group )
  * class temperature
  */
 
-temperature_info::temperature_info() = default;
+temperature::temperature() = default;
 
-temperature_info::temperature_info( int controller, double wanted, double actual )
-        : controller_ { controller }
-        , wanted_ { wanted }
-        , actual_ { actual } {}
-
-string temperature_info::controller_name() const
+string temperature::controller_name() const
 {
     if ( controller_ == -1 ) {
         return "bed";
@@ -89,9 +80,11 @@ string temperature_info::controller_name() const
     return "e" + to_string( controller_ );
 }
 
-void from_json( json const &data, temperature_info &temperature )
+void from_json( json const &src, temperature& dst )
 {
-    temperature = { data[ "id" ], data[ "S" ], data[ "T" ] };
+    dst.controller_ = src.at( "id" );
+    dst.wanted_ = src.at( "S" );
+    dst.actual_ = src.at( "T" );
 }
 
 } // namespace rep

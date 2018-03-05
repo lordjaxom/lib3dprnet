@@ -181,9 +181,9 @@ private:
  */
 
 void upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
-                   prnet::filesystem::path const& path, callback< error_code > callback )
+                   prnet::filesystem::path const& path, upload_callback cb )
 {
-    asio::spawn( context, [&, callback { move( callback ) }]( auto yield ) {
+    asio::spawn( context, [&, cb { move( cb ) }]( auto yield ) {
         error_code ec;
         try {
             tcp::resolver resolver { context };
@@ -214,7 +214,7 @@ void upload_model( boost::asio::io_context& context, settings const& settings, m
         } catch ( boost::beast::system_error const& e ) {
             ec = e.code();
         }
-        callback( ec );
+        cb( ec );
     } );
 }
 

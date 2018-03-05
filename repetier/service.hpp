@@ -27,19 +27,24 @@ using event = boost::signals2::signal< void ( Args... ) >;
 class PRNET_DLL service
 {
 public:
-    using job_event = event< std::string >;
-    using temperature_event = event< std::string, temperature_info >;
+    using printers_callback = std::function< void ( std::vector< printer > printers ) >;
+    using groups_callback = std::function< void ( std::vector< group > groups ) >;
+
+    using job_event = boost::signals2::signal< void ( std::string job ) >;
+    using temperature_event = boost::signals2::signal< void ( std::string printer, temperature temp ) >;
+    using printers_event = boost::signals2::signal< void ( std::vector< printer > printers ) >;
 
     service( boost::asio::io_context& context, settings settings );
     ~service();
 
-    void list_printer( callback< std::vector< printer > > cb );
-    void list_groups( std::string printer, callback< std::vector< group > > cb );
+    void list_printers( printers_callback cb );
+    void list_groups( std::string printer, groups_callback cb );
 
     job_event job_started;
     job_event job_finished;
     job_event job_killed;
     temperature_event temperature;
+    printers_event printers_changed;
 
 private:
     void connect();

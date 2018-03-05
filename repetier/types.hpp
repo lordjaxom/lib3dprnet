@@ -56,21 +56,26 @@ private:
 
 class PRNET_DLL printer
 {
+    friend void from_json( nlohmann::json const& src, printer& dst );
+
 public:
-    printer(); // for from_json
-    printer( bool active, std::string name, std::string slug );
+    printer();
 
     bool active() const { return active_; }
     std::string const& name() const { return name_; }
     std::string const& slug() const { return slug_; }
+    bool online() const { return online_; }
+    std::string const& job() const { return job_; }
 
 private:
-    bool active_;
+    bool active_ {};
     std::string name_;
     std::string slug_;
+    bool online_ {};
+    std::string job_;
 };
 
-void from_json( nlohmann::json const& data, printer& printer );
+void from_json( nlohmann::json const& src, printer& dst );
 
 /**
  * class group
@@ -78,31 +83,33 @@ void from_json( nlohmann::json const& data, printer& printer );
 
 class PRNET_DLL group
 {
-public:
-    static bool defaultGroup( std::string const& name );
+    friend void from_json( nlohmann::json const& src, group& dst );
 
-    group(); // for from_json
-    group( std::string name );
+public:
+    group();
 
     std::string const& name() const { return name_; }
     bool defaultGroup() const { return defaultGroup( name_ ); }
 
 private:
+    static bool defaultGroup( std::string const& name );
+
     std::string name_;
 };
 
-void from_json( nlohmann::json const& data, group& group );
+void from_json( nlohmann::json const& src, group& dst );
 
 
 /**
  * class temperature
  */
 
-class PRNET_DLL temperature_info
+class PRNET_DLL temperature
 {
+    friend void from_json( nlohmann::json const& src, temperature& dst );
+
 public:
-    temperature_info(); // for from_json
-    temperature_info( int controller, double wanted, double actual );
+    temperature();
 
     bool heatbed() const { return controller_ == -1; }
     int extruder() const { return controller_; }
@@ -117,7 +124,7 @@ private:
     double actual_ {};
 };
 
-void from_json( nlohmann::json const& data, temperature_info& temperature );
+void from_json( nlohmann::json const& src, temperature& dst );
 
 } // namespace rep
 } // namespace prnet

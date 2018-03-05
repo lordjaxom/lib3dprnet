@@ -2,7 +2,6 @@
 #define LIB3DPRNET_REQUEST_HPP
 
 #include <functional>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -22,9 +21,12 @@ namespace rep {
 class PRNET_DLL request
 {
 public:
-    static callback< nlohmann::json& > check_ok_flag();
+    using handler = std::function< void ( nlohmann::json& ) >;
 
-    request( std::string action, callback< nlohmann::json > cb );
+    static handler check_ok_flag();
+    static handler resolve_element( std::string key );
+
+    explicit request( std::string action );
     ~request();
 
     void printer( std::string printer );
@@ -36,15 +38,14 @@ public:
         message_[ "data" ].emplace( std::move( key ), std::forward< T >( value ) );
     }
 
-    void add_handler( callback< nlohmann::json& > handler );
+    void add_handler( handler h );
 
     std::string dump() const;
     void handle( nlohmann::json data ) const;
 
 private:
     nlohmann::json message_;
-    std::vector< callback< nlohmann::json& > > handlers_;
-    callback< nlohmann::json > callback_;
+    std::vector< handler > handlers_;
 };
 
 } // namespace rep

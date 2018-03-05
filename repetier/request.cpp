@@ -20,18 +20,24 @@ static logger logger( "rep::request" );
  * class request
  */
 
-callback< json& > request::check_ok_flag()
+request::handler request::check_ok_flag()
 {
     return []( auto& data ) {
-        if ( !data[ "ok" ] ) {
+        if ( !data.at( "ok" ) ) {
             throw system_error( make_error_code( prnet_errc::not_ok ) );
         }
     };
 }
 
-request::request( string action, callback< json > cb )
-        : message_ { { "action", move( action ) }, { "data", json::object() } }
-        , callback_ { move( cb ) } {}
+request::handler request::resolve_element( string key )
+{
+    return [key { move( key ) }]( auto& data ) {
+        data = data.at( key );
+    };
+}
+
+request::request( string action )
+        : message_ { { "action", move( action ) }, { "data", json::object() } } {}
 
 request::~request() = default;
 
@@ -45,9 +51,9 @@ void request::callback_id( size_t id )
     message_[ "callback_id" ] = id;
 }
 
-void request::add_handler( callback< json& > handler )
+void request::add_handler( handler h )
 {
-    handlers_.push_back( move( handler ) );
+    handlers_.push_back( move( h ) );
 }
 
 string request::dump() const
@@ -57,8 +63,7 @@ string request::dump() const
 
 void request::handle( json data ) const
 {
-    for_each( handlers_.cbegin(), handlers_.cend(), [&]( auto const& cb ) { cb( data ); } );
-    callback_( move( data ) );
+    for_each( handlers_.cbegin(), handlers_.cend(), [&data]( auto const& h ) { h( data ); } );
 }
 
 } // namespace rep

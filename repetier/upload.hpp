@@ -2,6 +2,7 @@
 #define LIB3DPRNET_REPETIER_UPLOAD_HPP
 
 #include <functional>
+#include <system_error>
 
 #include <boost/asio/io_context.hpp>
 
@@ -16,8 +17,10 @@ namespace rep {
  * function upload_model
  */
 
+using upload_callback = std::function< void( std::error_code ) >;
+
 void PRNET_DLL upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
-                   filesystem::path const& path, callback< std::error_code > callback );
+                             filesystem::path const& path, upload_callback cb );
 
 } // namespace rep
 } // namespace prnet

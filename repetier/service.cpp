@@ -18,7 +18,7 @@ namespace rep {
 
 static logger logger( "rep::service" );
 
-service::service( boost::asio::io_context &context, settings settings )
+service::service( asio::io_context &context, settings settings )
         : context_ { context }
         , settings_ { move( settings ) }
 {
@@ -27,17 +27,20 @@ service::service( boost::asio::io_context &context, settings settings )
 
 service::~service() = default;
 
-void service::list_printer( callback< vector< printer > > cb )
+void service::list_printers( printers_callback cb )
 {
-    request request { "listPrinter", move( cb ) };
-    send( move( request ) );
+    request req { "listPrinter" };
+    req.add_handler( move( cb ) );
+    send( move( req ) );
 }
 
-void service::list_groups( string printer, callback< vector< group > > cb )
+void service::list_groups( string printer, groups_callback cb )
 {
-    request request { "listModelGroups", [cb { move( cb ) }]( auto data ) { cb( move( data[ "groupNames" ] ) ); } };
+    request request { "listModelGroups" };
     request.printer( move( printer ) );
     request.add_handler( request::check_ok_flag() );
+    request.add_handler( request::resolve_element( "groupNames" ) );
+    request.add_handler( move( cb ) );
     send( move( request ) );
 }
 
@@ -50,6 +53,7 @@ void service::connect()
     client_->subscribe( "jobFinished", [this]( auto printer, auto ) { job_finished( move( printer ) ); } );
     client_->subscribe( "jobKilled", [this]( auto printer, auto ) { job_killed( move( printer ) ); } );
     client_->subscribe( "temp", [this]( auto printer, auto data ) { temperature( move( printer ), move( data ) ); } );
+    client_->subscribe( "printerListChanged", [this]( auto printer, auto data ) { printers_changed( move( data ) ); } );
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 

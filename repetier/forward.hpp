@@ -15,17 +15,6 @@ class request;
 class settings;
 class client;
 
-/**
- * callbacks
- */
-
-template< typename ...Args >
-using callback = std::function< void ( Args... ) >;
-
-using success_callback = callback<>;
-using connect_callback = callback< std::error_code >;
-using error_callback = callback< std::error_code >;
-
 } // namespace rep
 } // namespace prnet
 

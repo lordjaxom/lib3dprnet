@@ -35,10 +35,11 @@ int main( int argc, char const* const argv[] )
     socket.connect( settings, [&] {
         cout << "Successfully logged in" << endl;
 
-        rep::request request { "ping", [&]( auto ) {
+        rep::request request { "ping" };
+        request.add_handler( [&]( auto ) {
             cout << "Received pong" << endl;
             socket.close();
-        } };
+        } );
         socket.send( move( request ) );
     } );
 
