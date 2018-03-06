@@ -41,6 +41,12 @@ service::service( asio::io_context &context, settings settings, connect_callback
 
 service::~service() = default;
 
+void service::list_states()
+{
+    request req( "stateList" );
+    send( move( req ) );
+}
+
 void service::list_printers( printers_callback cb )
 {
     request req { "listPrinter" };

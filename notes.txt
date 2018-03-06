@@ -1,0 +1,33 @@
+protocol violation: log but otherwise ignore
+reconnect: immediate, 2s, 5s, ...
+
+on/off: printerListChanged
+job started: printerListChanged ->
+{
+          "active": true,
+          "job": "none",
+          "name": "Replicator",
+          "online": 0,
+          "pauseState": 0,
+          "paused": false,
+          "slug": "Replicator"
+        },
+        {
+          "active": true,
+          "analysed": 1,
+          "done": 0,
+          "job": "extruder.13.gear_small_11T",
+          "jobid": 1,
+          "linesSend": 0,
+          "name": "Ultimaker",
+          "ofLayer": 97,
+          "online": 1,
+          "pauseState": 0,
+          "paused": false,
+          "printTime": 1561.3852671649,
+          "printedTimeComp": 0,
+          "slug": "Ultimaker",
+          "start": 1520284504,
+          "totalLines": 74056
+        }
+

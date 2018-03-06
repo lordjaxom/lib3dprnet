@@ -38,6 +38,7 @@ public:
     service( service const& ) = delete;
     ~service();
 
+    void list_states();
     void list_printers( printers_callback cb );
     void list_groups( std::string printer, groups_callback cb );
 

@@ -26,7 +26,8 @@ int main( int argc, char const* const argv[] )
     cout << "Connecting to " << settings.host() << ":" << settings.port() << endl;
 
     rep::service service { context, settings };
-    service.list_printers( [&]( auto printers ) {
+    service.list_states();
+/*    service.list_printers( [&]( auto printers ) {
         for ( auto const& printer : printers ) {
             cout << "PRINTER: " << printer.name() << " " << printer.slug() << endl;
             service.list_groups( printer.slug(), [=]( auto groups ) {
@@ -35,7 +36,7 @@ int main( int argc, char const* const argv[] )
                 }
             } );
         }
-    } );
+    } );*/
 
     context.run();
 }
