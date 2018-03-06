@@ -6,6 +6,7 @@
 #include <nlohmann/json_fwd.hpp>
 
 #include "core/config.hpp"
+#include "core/string_view.hpp"
 
 namespace prnet {
 namespace rep {
@@ -59,15 +60,22 @@ class PRNET_DLL printer
     friend void from_json( nlohmann::json const& src, printer& dst );
 
 public:
+    enum state
+    {
+        disabled, offline, idle, printing
+    };
+
     printer();
 
-    bool active() const { return active_; }
     std::string const& name() const { return name_; }
     std::string const& slug() const { return slug_; }
-    bool online() const { return online_; }
     std::string const& job() const { return job_; }
 
+    state status() const;
+
 private:
+    static bool printingJob( std::string const& job );
+
     bool active_ {};
     std::string name_;
     std::string slug_;
@@ -75,7 +83,8 @@ private:
     std::string job_;
 };
 
-void from_json( nlohmann::json const& src, printer& dst );
+string_view PRNET_DLL to_string( printer::state state );
+
 
 /**
  * class group
@@ -96,8 +105,6 @@ private:
 
     std::string name_;
 };
-
-void from_json( nlohmann::json const& src, group& dst );
 
 
 /**
@@ -123,8 +130,6 @@ private:
     double wanted_ {};
     double actual_ {};
 };
-
-void from_json( nlohmann::json const& src, temperature& dst );
 
 } // namespace rep
 } // namespace prnet

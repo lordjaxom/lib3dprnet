@@ -13,8 +13,8 @@ namespace prnet {
 
 namespace detail {
 
-std::ostream& log_timestamp( std::ostream &os );
-std::ostream& log_pid( std::ostream &os );
+std::ostream& PRNET_DLL log_timestamp( std::ostream &os );
+std::ostream& PRNET_DLL log_pid( std::ostream &os );
 
 inline void log_write( std::ostream& os )
 {
@@ -38,7 +38,7 @@ void log_message( std::ostream& os, std::string const &tag, char const *level, A
 
 class PRNET_DLL logger
 {
-	struct PRNET_DLL level
+	struct level
 	{
 		char const* name;
 		unsigned level;

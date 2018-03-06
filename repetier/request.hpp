@@ -21,12 +21,15 @@ namespace rep {
 class PRNET_DLL request
 {
 public:
-    using handler = std::function< void ( nlohmann::json& ) >;
+    using json_handler = std::function< void ( nlohmann::json& ) >;
+    using void_handler = std::function< void () >;
 
-    static handler check_ok_flag();
-    static handler resolve_element( std::string key );
+    static json_handler check_ok_flag();
+    static json_handler resolve_element( char const* key );
 
     explicit request( std::string action );
+    request( request const& ) = delete;
+    request( request&& ) = default; // FIXME
     ~request();
 
     void printer( std::string printer );
@@ -38,14 +41,15 @@ public:
         message_[ "data" ].emplace( std::move( key ), std::forward< T >( value ) );
     }
 
-    void add_handler( handler h );
+    void add_handler( json_handler h );
+    void add_handler( void_handler h );
 
     std::string dump() const;
     void handle( nlohmann::json data ) const;
 
 private:
     nlohmann::json message_;
-    std::vector< handler > handlers_;
+    std::vector< json_handler > handlers_;
 };
 
 } // namespace rep

@@ -38,7 +38,20 @@ model_ident::model_ident( std::string printer, std::string name, std::string gro
  * class printer
  */
 
+bool printer::printingJob( std::string const& job )
+{
+    return job != "none";
+}
+
 printer::printer() = default;
+
+printer::state printer::status() const
+{
+    return !active_ ? disabled :
+           !online_ ? offline :
+           !printingJob( job_ ) ? idle :
+           printing;
+}
 
 void from_json( json const& src, printer& dst )
 {
@@ -47,6 +60,17 @@ void from_json( json const& src, printer& dst )
     dst.slug_ = src.at( "slug" );
     dst.online_ = src.at( "online" ) != 0;
     dst.job_ = src.at( "job" );
+}
+
+string_view to_string( printer::state state )
+{
+    switch ( state ) {
+        case printer::disabled: return "disabled";
+        case printer::offline: return "offline";
+        case printer::idle: return "idle";
+        case printer::printing: return "printing";
+    }
+    throw invalid_argument( "unknown printer::state" );
 }
 
 /**
@@ -77,7 +101,7 @@ string temperature::controller_name() const
     if ( controller_ == -1 ) {
         return "bed";
     }
-    return "e" + to_string( controller_ );
+    return "e" + std::to_string( controller_ );
 }
 
 void from_json( json const &src, temperature& dst )

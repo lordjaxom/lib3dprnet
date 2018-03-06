@@ -17,10 +17,24 @@ namespace prnet {
 namespace rep {
 
 static logger logger( "rep::service" );
+    
+namespace detail {
+    
+inline long retryTimeout( size_t retry ) 
+{
+    switch ( retry++ ) {
+        case 0: return 0;
+        case 1: return 2;
+        default: return 5;
+    }
+}    
+    
+} // namespace detail
 
-service::service( asio::io_context &context, settings settings )
-        : context_ { context }
-        , settings_ { move( settings ) }
+service::service( asio::io_context &context, settings settings, connect_callback cb )
+        : context_( context )
+        , settings_( move( settings ) )
+        , connectCallback_( move( cb ) )
 {
     connect();
 }
@@ -36,7 +50,7 @@ void service::list_printers( printers_callback cb )
 
 void service::list_groups( string printer, groups_callback cb )
 {
-    request request { "listModelGroups" };
+    request request( "listModelGroups" );
     request.printer( move( printer ) );
     request.add_handler( request::check_ok_flag() );
     request.add_handler( request::resolve_element( "groupNames" ) );
@@ -49,9 +63,6 @@ void service::connect()
     logger.info( "initiating connection to server" );
 
     client_ = make_unique< client >( context_, [this]( auto ec ) { this->handle_error( ec ); } );
-    client_->subscribe( "jobStarted", [this]( auto printer, auto ) { job_started( move( printer ) ); } );
-    client_->subscribe( "jobFinished", [this]( auto printer, auto ) { job_finished( move( printer ) ); } );
-    client_->subscribe( "jobKilled", [this]( auto printer, auto ) { job_killed( move( printer ) ); } );
     client_->subscribe( "temp", [this]( auto printer, auto data ) { temperature( move( printer ), move( data ) ); } );
     client_->subscribe( "printerListChanged", [this]( auto printer, auto data ) { printers_changed( move( data ) ); } );
     client_->connect( settings_, [this] { this->handle_connected(); } );
@@ -59,40 +70,48 @@ void service::connect()
 
 void service::send( request&& req )
 {
-    req.add_handler( [this]( auto& ) { pending_ = false; this->send_next(); } );
     queued_.push_back( move( req ) );
-    send_next();
+    if ( queued_.size() == 1 ) {
+        send_next();
+    }
 }
 
 void service::send_next()
 {
-    if ( !queued_.empty() && connected_ && !pending_ ) {
-        client_->send( move( queued_.front() ) );
-        queued_.pop_front();
-        pending_ = true;
+    if ( connected_ && !queued_.empty() ) {
+        auto& req = queued_.front();
+        req.add_handler( [this] { queued_.pop_front(); this->send_next(); } );
+        client_->send( move( req ) );
     }
 }
 
 void service::handle_connected()
 {
     connected_ = true;
+    retry_ = 0;
+
+    if ( connectCallback_ ) {
+        connectCallback_( {} );
+    }
+
     send_next();
 }
 
-bool service::handle_error( std::error_code ec )
+void service::handle_error( std::error_code ec )
 {
-    if ( !ec ) {
-        return true;
+    connected_ = false;
+    client_ = nullptr;
+
+    if ( connectCallback_ ) {
+        connectCallback_( ec );
     }
 
-    logger.error( "error in server communication, reconnecting in five seconds: ", ec.message() );
+    long timeout = detail::retryTimeout( retry_++ );
 
-    connected_ = false;
-    client_ = {};
+    logger.error( "error in server communication, reconnecting in ", timeout, " seconds: ", ec.message() );
 
-    auto timer = make_shared< asio::deadline_timer >( context_, boost::posix_time::seconds( 5 ) );
-    timer->async_wait( [this, timer]( auto ec ) { this->connect(); } );
-    return false;
+    auto timer = make_shared< asio::deadline_timer >( context_, boost::posix_time::seconds( timeout ) );
+    timer->async_wait( [this, timer]( auto ) { this->connect(); } );
 }
 
 } // namespace rep

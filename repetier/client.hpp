@@ -15,6 +15,7 @@
 #include "core/string_view.hpp"
 #include "forward.hpp"
 #include "request.hpp"
+#include "types.hpp"
 
 namespace prnet {
 namespace rep {
@@ -31,9 +32,10 @@ public:
     using event_callback = std::function< void ( std::string printer, nlohmann::json data ) >;
 
     client( boost::asio::io_context& context, error_callback ecb );
+    client( client const& ) = delete;
     ~client();
 
-    void connect( settings const& settings, success_callback cb );
+    void connect( settings set, success_callback cb );
     void send( request req );
     void close();
 

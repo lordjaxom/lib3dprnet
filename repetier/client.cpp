@@ -42,22 +42,23 @@ client::client( asio::io_context& context, error_callback ecb )
 
 client::~client() = default;
 
-void client::connect( settings const& settings, success_callback cb )
+void client::connect( settings set, success_callback cb )
 {
-    checked_spawn( [this, &settings, cb { move( cb ) }]( auto yield ) mutable {
-        logger.info( "connecting to ", settings.host(), ":", settings.port() );
+    checked_spawn( [this, set = move( set ), cb = move( cb )]( auto yield ) mutable {
+        logger.info( "connecting to ", set.host(), ":", set.port() );
 
         tcp::resolver resolver { context_ };
-        auto resolved { resolver.async_resolve( settings.host(), settings.port(), yield ) };
+        auto resolved { resolver.async_resolve( set.host(), set.port(), yield ) };
 
         asio::async_connect( stream_.next_layer(), resolved, yield );
-        stream_.async_handshake( settings.host(), "/socket", yield );
+        stream_.async_handshake( set.host(), "/socket", yield );
 
         logger.debug( "connection successful, sending login request" );
 
         request req { "login" };
-        req.set( "apikey", settings.apikey() );
+        req.set( "apikey", set.apikey() );
         req.add_handler( request::check_ok_flag() );
+        req.add_handler( move( cb ) );
 
         this->send( move( req ) );
 
@@ -101,16 +102,15 @@ void client::checked_spawn( Func&& func )
         try {
             func( yield );
         } catch ( system_error const& e ) {
-            logger.error( "system error: ", e.what() );
+            logger.error( "error communicating with repetier server: ", e.what() );
             errorCallback_( e.code() );
         } catch ( boost::beast::system_error const& e ) {
             if ( e.code() != make_error_code( boost::asio::error::operation_aborted ) ) {
-                logger.error( "system error: ", e.what() );
+                logger.error( "error communicating with repetier server: ", e.what() );
                 errorCallback_( e.code() );
             }
         } catch ( json::exception const& e ) {
-            logger.error( "protocol violation: ", e.what() );
-            errorCallback_( make_error_code( prnet_errc::protocol_violation ) );
+            logger.warning( "protocol violation from repetier server: ", e.what() );
         }
     } );
 }
@@ -122,7 +122,7 @@ void client::receive()
         stream_.async_read( buffer, yield );
 
         // for some reason the message must be one contiguous sequence for json::parse
-        string message { asio::buffers_begin( buffer.data() ), asio::buffers_end( buffer.data() ) };
+        string message( asio::buffers_begin( buffer.data() ), asio::buffers_end( buffer.data() ) );
 
         logger.debug( "<<< ", message );
 
@@ -133,24 +133,18 @@ void client::receive()
 
 void client::handle_message( json&& message )
 {
-    if ( message.is_array() ) {
-        for_each( message.begin(), message.end(), [this]( auto& item ) { this->handle_message( move( item ) ); } );
-        return;
-    }
-
-    long callbackId { message.at( "callback_id" ) };
-    auto eventList { message.find( "eventList" ) };
-    auto& data { message.at( "data" ) };
+    long callbackId = message.at( "callback_id" );
+    auto& data = message.at( "data" );
     if ( callbackId >= 0 ) {
         handle_callback( static_cast< size_t >( callbackId ), move( data ) );
-    } else if ( eventList != message.end() && *eventList ) {
+    } else if ( message.value( "eventList", false ) ) {
         for_each( data.begin(), data.end(), [this]( auto& event ) { this->handle_event( move( event ) ); } );
     }
 }
 
 void client::handle_callback( size_t callbackId, json&& data )
 {
-    auto pending { pending_.find( callbackId ) };
+    auto pending = pending_.find( callbackId );
     if ( pending == pending_.end() ) {
         logger.error( "spurious callback ", callbackId, " received" );
         return;
@@ -161,10 +155,10 @@ void client::handle_callback( size_t callbackId, json&& data )
 
 void client::handle_event( json&& event )
 {
-    auto& type { event.at( "event" ) };
-    auto subscription { subscriptions_.find( type ) };
+    string eventType = event.at( "event" );
+    auto subscription = subscriptions_.find( eventType );
     if ( subscription != subscriptions_.end() ) {
-        subscription->second( move( event.at( "printer" ) ), move( event.at( "data" ) ) );
+        subscription->second( event.value( "printer", string() ), move( event.at( "data" ) ) );
     }
 }
 

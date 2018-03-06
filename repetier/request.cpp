@@ -20,7 +20,7 @@ static logger logger( "rep::request" );
  * class request
  */
 
-request::handler request::check_ok_flag()
+request::json_handler request::check_ok_flag()
 {
     return []( auto& data ) {
         if ( !data.at( "ok" ) ) {
@@ -29,9 +29,9 @@ request::handler request::check_ok_flag()
     };
 }
 
-request::handler request::resolve_element( string key )
+request::json_handler request::resolve_element( char const* key )
 {
-    return [key { move( key ) }]( auto& data ) {
+    return [key]( auto& data ) {
         data = data.at( key );
     };
 }
@@ -43,17 +43,22 @@ request::~request() = default;
 
 void request::printer( string printer )
 {
-    message_[ "printer" ] = move( printer );
+    message_.emplace( "printer", move( printer ) );
 }
 
 void request::callback_id( size_t id )
 {
-    message_[ "callback_id" ] = id;
+    message_.emplace( "callback_id", id );
 }
 
-void request::add_handler( handler h )
+void request::add_handler( json_handler h )
 {
     handlers_.push_back( move( h ) );
+}
+
+void request::add_handler( void_handler h )
+{
+    handlers_.push_back( [h = move( h )]( auto& ) { h(); } );
 }
 
 string request::dump() const
