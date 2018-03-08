@@ -31,37 +31,50 @@ inline long retryTimeout( size_t retry )
     
 } // namespace detail
 
-service::service( asio::io_context &context, settings settings, connect_callback cb )
+service::service( asio::io_context &context, settings settings )
         : context_( context )
         , settings_( move( settings ) )
-        , connectCallback_( move( cb ) )
 {
     connect();
 }
 
 service::~service() = default;
 
-void service::list_states()
+void service::request_printers()
 {
-    request req( "stateList" );
+    request req( *client_, "listPrinter" );
+    req.add_handler( [this]( auto& data ) { on_printers_( move( data ) ); } );
     send( move( req ) );
 }
 
-void service::list_printers( printers_callback cb )
+void service::request_groups( string slug )
 {
-    request req { "listPrinter" };
-    req.add_handler( move( cb ) );
-    send( move( req ) );
-}
-
-void service::list_groups( string printer, groups_callback cb )
-{
-    request request( "listModelGroups" );
-    request.printer( move( printer ) );
+    request request( *client_, "listModelGroups" );
+    request.printer( slug );
     request.add_handler( request::check_ok_flag() );
     request.add_handler( request::resolve_element( "groupNames" ) );
-    request.add_handler( move( cb ) );
+    request.add_handler( [this, slug = move( slug )]( auto& data ) { on_groups_( move( slug ), move( data ) ); } );
     send( move( request ) );
+}
+
+void service::on_disconnect( disconnect_event::slot_type const& handler )
+{
+    on_disconnect_.connect( handler );
+}
+
+void service::on_temperature( temperature_event::slot_type const& handler )
+{
+    on_temperature_.connect( handler );
+}
+
+void service::on_printers( printers_event::slot_type const& handler )
+{
+    on_printers_.connect( handler );
+}
+
+void service::on_groups( groups_event::slot_type const& handler )
+{
+    on_groups_.connect( handler );
 }
 
 void service::connect()
@@ -69,8 +82,8 @@ void service::connect()
     logger.info( "initiating connection to server" );
 
     client_ = make_unique< client >( context_, [this]( auto ec ) { this->handle_error( ec ); } );
-    client_->subscribe( "temp", [this]( auto printer, auto data ) { temperature( move( printer ), move( data ) ); } );
-    client_->subscribe( "printerListChanged", [this]( auto printer, auto data ) { printers_changed( move( data ) ); } );
+    client_->subscribe( "temp", [this]( auto slug, auto data ) { on_temperature_( move( slug ), move( data ) ); } );
+    client_->subscribe( "printerListChanged", [this]( auto, auto data ) { on_printers_( move( data ) ); } );
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 
@@ -95,22 +108,15 @@ void service::handle_connected()
 {
     connected_ = true;
     retry_ = 0;
-
-    if ( connectCallback_ ) {
-        connectCallback_( {} );
-    }
-
     send_next();
 }
 
-void service::handle_error( std::error_code ec )
+void service::handle_error( error_code ec )
 {
     connected_ = false;
     client_ = nullptr;
 
-    if ( connectCallback_ ) {
-        connectCallback_( ec );
-    }
+    on_disconnect_( ec );
 
     long timeout = detail::retryTimeout( retry_++ );
 

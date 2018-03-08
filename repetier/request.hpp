@@ -27,13 +27,14 @@ public:
     static json_handler check_ok_flag();
     static json_handler resolve_element( char const* key );
 
-    explicit request( std::string action );
+    request( client& cl, std::string action );
     request( request const& ) = delete;
-    request( request&& ) = default; // FIXME
+    request( request&& );
     ~request();
 
+    std::size_t callbackId() const { return callbackId_; }
+
     void printer( std::string printer );
-    void callback_id( size_t id );
 
     template< typename T >
     void set( std::string key, T&& value )
@@ -48,6 +49,7 @@ public:
     void handle( nlohmann::json data ) const;
 
 private:
+    std::size_t callbackId_;
     nlohmann::json message_;
     std::vector< json_handler > handlers_;
 };

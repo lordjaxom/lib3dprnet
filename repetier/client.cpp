@@ -55,7 +55,7 @@ void client::connect( settings set, success_callback cb )
 
         logger.debug( "connection successful, sending login request" );
 
-        request req { "login" };
+        request req( *this, "login" );
         req.set( "apikey", set.apikey() );
         req.add_handler( request::check_ok_flag() );
         req.add_handler( move( cb ) );
@@ -69,15 +69,12 @@ void client::connect( settings set, success_callback cb )
 void client::send( request req )
 {
     checked_spawn( [this, req { move( req ) }] ( auto yield ) mutable {
-        auto callbackId { ++lastCallbackId_ };
-        req.callback_id( callbackId );
-
         auto message { req.dump() };
 
         logger.debug( ">>> ", message );
 
         stream_.async_write( asio::buffer( message ), yield );
-        pending_.emplace( callbackId, move( req ) );
+        pending_.emplace( req.callbackId(), move( req ) );
     } );
 }
 

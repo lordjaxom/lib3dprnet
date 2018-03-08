@@ -26,12 +26,14 @@ namespace rep {
 
 class PRNET_DLL client
 {
+    friend class request;
+
 public:
     using success_callback = std::function< void () >;
     using error_callback = std::function< void ( std::error_code ec ) >;
     using event_callback = std::function< void ( std::string printer, nlohmann::json data ) >;
 
-    client( boost::asio::io_context& context, error_callback ecb );
+    client( boost::asio::io_context& context, error_callback cb );
     client( client const& ) = delete;
     ~client();
 
@@ -46,6 +48,8 @@ private:
     void checked_spawn( Func&& func );
 
     void receive();
+
+    std::size_t nextCallbackId() { return ++lastCallbackId_; }
 
     void handle_message( nlohmann::json&& message );
     void handle_callback( std::size_t callbackId, nlohmann::json&& data );

@@ -5,6 +5,7 @@
 
 #include "core/error.hpp"
 #include "core/logging.hpp"
+#include "client.hpp"
 #include "request.hpp"
 #include "types.hpp"
 
@@ -36,19 +37,20 @@ request::json_handler request::resolve_element( char const* key )
     };
 }
 
-request::request( string action )
-        : message_ { { "action", move( action ) }, { "data", json::object() } } {}
+request::request( client& cl, string action )
+        : callbackId_( cl.nextCallbackId() )
+        , message_ {
+            { "callback_id", callbackId_ },
+            { "action", move( action ) },
+            { "data", json::object() }
+        } {}
 
+request::request( request&& ) = default;
 request::~request() = default;
 
 void request::printer( string printer )
 {
     message_.emplace( "printer", move( printer ) );
-}
-
-void request::callback_id( size_t id )
-{
-    message_.emplace( "callback_id", id );
 }
 
 void request::add_handler( json_handler h )

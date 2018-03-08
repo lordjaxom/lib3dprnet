@@ -17,33 +17,29 @@
 namespace prnet {
 namespace rep {
 
-template< typename ...Args >
-using event = boost::signals2::signal< void ( Args... ) >;
-
 /**
  * class service
  */
 
 class PRNET_DLL service
 {
-public:
-    using connect_callback = std::function< void ( std::error_code ec ) >;
-    using printers_callback = std::function< void ( std::vector< printer > printers ) >;
-    using groups_callback = std::function< void ( std::vector< group > groups ) >;
-
-    using temperature_event = boost::signals2::signal< void ( std::string printer, temperature temp ) >;
+    using disconnect_event = boost::signals2::signal< void ( std::error_code ec ) >;
+    using temperature_event = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
     using printers_event = boost::signals2::signal< void ( std::vector< printer > printers ) >;
+    using groups_event = boost::signals2::signal< void ( std::string printer, std::vector< group > groups ) >;
 
-    service( boost::asio::io_context& context, settings settings, connect_callback cb = {} );
+public:
+    service( boost::asio::io_context& context, settings settings );
     service( service const& ) = delete;
     ~service();
 
-    void list_states();
-    void list_printers( printers_callback cb );
-    void list_groups( std::string printer, groups_callback cb );
+    void request_printers();
+    void request_groups( std::string slug );
 
-    temperature_event temperature;
-    printers_event printers_changed;
+    void on_disconnect( disconnect_event::slot_type const& handler );
+    void on_temperature( temperature_event::slot_type const& handler );
+    void on_printers( printers_event::slot_type const& handler );
+    void on_groups( groups_event::slot_type const& handler );
 
 private:
     void connect();
@@ -55,11 +51,15 @@ private:
 
     boost::asio::io_context& context_;
     settings settings_;
-    connect_callback connectCallback_;
     std::unique_ptr< client > client_;
     bool connected_ {};
     std::size_t retry_ {};
     std::list< request > queued_;
+
+    disconnect_event on_disconnect_;
+    temperature_event on_temperature_;
+    printers_event on_printers_;
+    groups_event on_groups_;
 };
 
 } // namespace rep
