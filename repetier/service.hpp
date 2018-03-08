@@ -26,20 +26,28 @@ class PRNET_DLL service
     using disconnect_event = boost::signals2::signal< void ( std::error_code ec ) >;
     using temperature_event = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
     using printers_event = boost::signals2::signal< void ( std::vector< printer > printers ) >;
-    using groups_event = boost::signals2::signal< void ( std::string printer, std::vector< group > groups ) >;
+    using config_event = boost::signals2::signal< void ( std::string slug, printer_config config ) >;
+    using groups_event = boost::signals2::signal< void ( std::string slug, std::vector< group > groups ) >;
+    using models_event = boost::signals2::signal< void ( std::string slug, std::vector< model > models ) >;
 
 public:
     service( boost::asio::io_context& context, settings settings );
     service( service const& ) = delete;
     ~service();
 
+    bool connected() const { return connected_; }
+
     void request_printers();
+    void request_config( std::string slug );
     void request_groups( std::string slug );
+    void request_models( std::string slug );
 
     void on_disconnect( disconnect_event::slot_type const& handler );
     void on_temperature( temperature_event::slot_type const& handler );
     void on_printers( printers_event::slot_type const& handler );
+    void on_config( config_event::slot_type const& handler );
     void on_groups( groups_event::slot_type const& handler );
+    void on_models( models_event::slot_type const& handler );
 
 private:
     void connect();
@@ -59,7 +67,9 @@ private:
     disconnect_event on_disconnect_;
     temperature_event on_temperature_;
     printers_event on_printers_;
+    config_event on_config_;
     groups_event on_groups_;
+    models_event on_models_;
 };
 
 } // namespace rep

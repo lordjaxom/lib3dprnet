@@ -34,6 +34,48 @@ model_ident::model_ident( std::string printer, std::string name, std::string gro
         , name_ { move( name ) }
         , group_ { move( group ) } {}
 
+
+/**
+ * class extruder_config
+ */
+
+void from_json( nlohmann::json const& src, extruder_config& dst )
+{
+    dst.maxTemp_ = src.at( "maxTemp" );
+}
+
+
+/**
+ * class heatbed_config
+ */
+
+void from_json( nlohmann::json const& src, heatbed_config& dst )
+{
+    dst.maxTemp_ = src.at( "maxTemp" );
+}
+
+
+/**
+ * class printer_config
+ */
+
+void from_json( nlohmann::json const& src, printer_config& dst )
+{
+    auto const& general = src.at( "general" );
+    dst.active_ = general.at( "active" );
+    dst.slug_ = general.at( "slug" );
+    dst.name_ = general.at( "name" );
+    dst.firmwareName_ = general.at( "firmwareName" );
+
+    dst.extruders_ = src.at( "extruders" ).get< vector< extruder_config > >();
+
+    auto heatedBed = src.find( "heatedBed" );
+    dst.heatbed_ = general.at( "heatedBed" ) && heatedBed != src.end() && heatedBed->at( "installed" )
+                   ? optional< heatbed_config >( *heatedBed )
+                   : nullopt;
+}
+
+
 /**
  * class printer
  */
@@ -43,9 +85,7 @@ bool printer::printingJob( std::string const& job )
     return job != "none";
 }
 
-printer::printer() = default;
-
-printer::state printer::status() const
+printer::state_t printer::state() const
 {
     return !active_ ? disabled :
            !online_ ? offline :
@@ -62,7 +102,7 @@ void from_json( json const& src, printer& dst )
     dst.job_ = src.at( "job" );
 }
 
-string_view to_string( printer::state state )
+string_view to_string( printer::state_t state )
 {
     switch ( state ) {
         case printer::disabled: return "disabled";
@@ -82,8 +122,6 @@ bool group::defaultGroup( std::string const &name )
     return name == "#";
 }
 
-group::group() = default;
-
 void from_json( json const& src, group& dst )
 {
     dst.name_ = src;
@@ -91,24 +129,58 @@ void from_json( json const& src, group& dst )
 
 
 /**
+ * class model
+ */
+
+void from_json( json const& src, model& dst )
+{
+    dst.id_ = src.at( "id" );
+    dst.name_ = src.at( "name" );
+    dst.modelGroup_ = src.at( "group" );
+    dst.created_ = src.at( "created" ).get< size_t >() / 1000;
+    dst.length_ = src.at( "length" );
+    dst.layers_ = src.at( "layer" );
+    dst.lines_ = src.at( "lines" );
+    dst.printTime_ = chrono::milliseconds( static_cast< uint64_t >( src.at( "printTime" ).get< double >() * 1000.0 ) );
+}
+
+
+/**
  * class temperature
  */
 
-temperature::temperature() = default;
-
 string temperature::controller_name() const
 {
-    if ( controller_ == -1 ) {
-        return "bed";
+    switch ( controller_ ) {
+        case heatbed: return string( to_string( controller_ ) );
+        case extruder: return string( to_string( controller_ ) ) + std::to_string( controllerIndex_ );
     }
-    return "e" + std::to_string( controller_ );
+    throw invalid_argument( "unknown temperature::controller" );
 }
 
 void from_json( json const &src, temperature& dst )
 {
-    dst.controller_ = src.at( "id" );
+    int index = src.at( "id" );
+    if ( index >= 0 ) {
+        dst.controller_ = temperature::extruder;
+        dst.controllerIndex_ = static_cast< size_t >( index );
+    } else if ( index == -1 ) {
+        dst.controller_ = temperature::heatbed;
+        dst.controllerIndex_ = 0;
+    } else {
+        throw invalid_argument( "unknown temperature controller id " + std::to_string( index ) );
+    }
     dst.wanted_ = src.at( "S" );
     dst.actual_ = src.at( "T" );
+}
+
+string_view to_string( temperature::controller_t controller )
+{
+    switch ( controller ) {
+        case temperature::extruder: return "extruder";
+        case temperature::heatbed: return "heatbed";
+    }
+    throw invalid_argument( "unknown temperature::controller" );
 }
 
 } // namespace rep

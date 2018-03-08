@@ -47,14 +47,30 @@ void service::request_printers()
     send( move( req ) );
 }
 
+void service::request_config( string slug )
+{
+    request req( *client_, "getPrinterConfig" );
+    req.printer( slug );
+    req.add_handler( [this, slug = move( slug )]( auto& data ) { on_config_( move( slug ), move( data ) ); } );
+    send( move( req ) );
+}
+
 void service::request_groups( string slug )
 {
-    request request( *client_, "listModelGroups" );
-    request.printer( slug );
-    request.add_handler( request::check_ok_flag() );
-    request.add_handler( request::resolve_element( "groupNames" ) );
-    request.add_handler( [this, slug = move( slug )]( auto& data ) { on_groups_( move( slug ), move( data ) ); } );
-    send( move( request ) );
+    request req( *client_, "listModelGroups" );
+    req.printer( slug );
+    req.add_handler( request::check_ok_flag() );
+    req.add_handler( request::resolve_element( "groupNames" ) );
+    req.add_handler( [this, slug = move( slug )]( auto& data ) { on_groups_( move( slug ), move( data ) ); } );
+    send( move( req ) );
+}
+
+void service::request_models( string slug )
+{
+    request req( *client_, "listJobs" );
+    req.printer( slug );
+    req.add_handler( [this, slug = move( slug )]( auto& data ) { on_models_( move( slug ), move( data ) ); } );
+    send( move( req ) );
 }
 
 void service::on_disconnect( disconnect_event::slot_type const& handler )
@@ -72,9 +88,19 @@ void service::on_printers( printers_event::slot_type const& handler )
     on_printers_.connect( handler );
 }
 
+void service::on_config( config_event::slot_type const& handler )
+{
+    on_config_.connect( handler );
+}
+
 void service::on_groups( groups_event::slot_type const& handler )
 {
     on_groups_.connect( handler );
+}
+
+void service::on_models( models_event::slot_type const& handler )
+{
+    on_models_.connect( handler );
 }
 
 void service::connect()
@@ -84,6 +110,9 @@ void service::connect()
     client_ = make_unique< client >( context_, [this]( auto ec ) { this->handle_error( ec ); } );
     client_->subscribe( "temp", [this]( auto slug, auto data ) { on_temperature_( move( slug ), move( data ) ); } );
     client_->subscribe( "printerListChanged", [this]( auto, auto data ) { on_printers_( move( data ) ); } );
+    client_->subscribe( "config", [this]( auto slug, auto data ) { on_config_( move( slug ), move( data ) ); } );
+    client_->subscribe( "modelGroupListChanged", [this]( auto slug, auto ) { this->request_groups( move( slug ) ); } );
+    client_->subscribe( "jobsChanges", [this]( auto slug, auto ) { this->request_models( move( slug ) ); } );
     client_->connect( settings_, [this] { this->handle_connected(); } );
 }
 

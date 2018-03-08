@@ -44,8 +44,7 @@ public:
     void subscribe( std::string event, event_callback cb );
 
 private:
-    template< typename Func >
-    void checked_spawn( Func&& func );
+    template< typename Func > void checked_spawn( Func&& func );
 
     void receive();
 

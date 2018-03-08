@@ -14,8 +14,11 @@
 
 namespace prnet {
 
-template< typename T >
-using optional = PRNET_OPTIONAL_NAMESPACE::optional< T >;
+using PRNET_OPTIONAL_NAMESPACE::optional;
+using PRNET_OPTIONAL_NAMESPACE::make_optional;
+using PRNET_OPTIONAL_NAMESPACE::nullopt_t;
+using PRNET_OPTIONAL_NAMESPACE::nullopt;
+using PRNET_OPTIONAL_NAMESPACE::bad_optional_access;
 
 } // namespace prnet
 
