@@ -23,6 +23,7 @@ namespace rep {
 
 class PRNET_DLL service
 {
+    using reconnect_event = boost::signals2::signal< void () >;
     using disconnect_event = boost::signals2::signal< void ( std::error_code ec ) >;
     using temperature_event = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
     using printers_event = boost::signals2::signal< void ( std::vector< printer > printers ) >;
@@ -42,6 +43,7 @@ public:
     void request_groups( std::string slug );
     void request_models( std::string slug );
 
+    void on_reconnect( reconnect_event::slot_type const& handler );
     void on_disconnect( disconnect_event::slot_type const& handler );
     void on_temperature( temperature_event::slot_type const& handler );
     void on_printers( printers_event::slot_type const& handler );
@@ -55,6 +57,7 @@ private:
     void send_next();
 
     void handle_connected();
+	void handle_sent();
     void handle_error( std::error_code ec );
 
     boost::asio::io_context& context_;
@@ -64,6 +67,7 @@ private:
     std::size_t retry_ {};
     std::list< request > queued_;
 
+    reconnect_event on_reconnect_;
     disconnect_event on_disconnect_;
     temperature_event on_temperature_;
     printers_event on_printers_;

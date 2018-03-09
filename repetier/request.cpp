@@ -17,6 +17,7 @@ namespace rep {
 
 static logger logger( "rep::request" );
 
+
 /**
  * class request
  */
@@ -37,10 +38,8 @@ request::json_handler request::resolve_element( char const* key )
     };
 }
 
-request::request( client& cl, string action )
-        : callbackId_( cl.nextCallbackId() )
-        , message_ {
-            { "callback_id", callbackId_ },
+request::request( string action )
+		: message_ {
             { "action", move( action ) },
             { "data", json::object() }
         } {}
@@ -63,8 +62,9 @@ void request::add_handler( void_handler h )
     handlers_.push_back( [h = move( h )]( auto& ) { h(); } );
 }
 
-string request::dump() const
+string request::build( std::size_t callbackId )
 {
+	message_.emplace( "callback_id", callbackId );
     return message_.dump();
 }
 

@@ -55,26 +55,28 @@ void client::connect( settings set, success_callback cb )
 
         logger.debug( "connection successful, sending login request" );
 
-        request req( *this, "login" );
-        req.set( "apikey", set.apikey() );
-        req.add_handler( request::check_ok_flag() );
-        req.add_handler( move( cb ) );
+        auto req = make_shared< request >( "login" );
+        req->set( "apikey", set.apikey() );
+        req->add_handler( request::check_ok_flag() );
+        req->add_handler( move( cb ) );
+        req->add_handler( [req]() mutable { logger.info( "login successful" ); req.reset(); } );
 
-        this->send( move( req ) );
+        this->send( *req );
 
         this->receive();
     } );
 }
 
-void client::send( request req )
+void client::send( request& req )
 {
-    checked_spawn( [this, req { move( req ) }] ( auto yield ) mutable {
-        auto message { req.dump() };
+    checked_spawn( [this, &req] ( auto yield ) mutable {
+		auto callbackId = ++lastCallbackId_;
+        auto message = req.build( callbackId );
 
         logger.debug( ">>> ", message );
 
         stream_.async_write( asio::buffer( message ), yield );
-        pending_.emplace( req.callbackId(), move( req ) );
+        pending_.emplace( callbackId, &req );
     } );
 }
 
@@ -146,7 +148,7 @@ void client::handle_callback( size_t callbackId, json&& data )
         logger.error( "spurious callback ", callbackId, " received" );
         return;
     }
-    pending->second.handle( move( data ) );
+    pending->second->handle( move( data ) );
     pending_.erase( pending );
 }
 

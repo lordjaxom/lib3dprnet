@@ -26,8 +26,6 @@ namespace rep {
 
 class PRNET_DLL client
 {
-    friend class request;
-
 public:
     using success_callback = std::function< void () >;
     using error_callback = std::function< void ( std::error_code ec ) >;
@@ -38,7 +36,7 @@ public:
     ~client();
 
     void connect( settings set, success_callback cb );
-    void send( request req );
+    void send( request& req );
     void close();
 
     void subscribe( std::string event, event_callback cb );
@@ -48,8 +46,6 @@ private:
 
     void receive();
 
-    std::size_t nextCallbackId() { return ++lastCallbackId_; }
-
     void handle_message( nlohmann::json&& message );
     void handle_callback( std::size_t callbackId, nlohmann::json&& data );
     void handle_event( nlohmann::json&& event );
@@ -57,9 +53,9 @@ private:
     boost::asio::io_context& context_;
     boost::beast::websocket::stream< boost::asio::ip::tcp::socket > stream_;
     error_callback errorCallback_;
-    std::unordered_map< std::size_t, request > pending_;
+    std::unordered_map< std::size_t, request* > pending_;
     std::unordered_map< std::string, event_callback > subscriptions_;
-    std::size_t lastCallbackId_ {};
+	std::size_t lastCallbackId_ {};
 };
 
 } // namespace rep
