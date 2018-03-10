@@ -11,9 +11,9 @@ namespace rep {
 
 class model_ident;
 class printer;
-class request;
-class settings;
-class client;
+class Request;
+class Endpoint;
+class Client;
 
 } // namespace rep
 } // namespace prnet

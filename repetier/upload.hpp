@@ -19,7 +19,7 @@ namespace rep {
 
 using upload_callback = std::function< void( std::error_code ) >;
 
-void PRNET_DLL upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
+void PRNET_DLL upload_model( boost::asio::io_context& context, Endpoint const& settings, model_ident const& ident,
                              filesystem::path const& path, upload_callback cb );
 
 } // namespace rep

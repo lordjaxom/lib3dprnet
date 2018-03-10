@@ -15,13 +15,13 @@ namespace prnet {
 namespace rep {
 
 /**
- * class settings
+ * class Endpoint
  */
 
-class PRNET_DLL settings
+class PRNET_DLL Endpoint
 {
 public:
-    settings( std::string host, std::string port, std::string apikey );
+    Endpoint( std::string host, std::string port, std::string apikey );
 
     std::string const& host() const { return host_; }
     std::string const& port() const { return port_; }

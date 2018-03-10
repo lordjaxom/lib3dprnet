@@ -9,8 +9,10 @@
 
 #include <boost/asio/io_context.hpp>
 #include <boost/signals2/signal.hpp>
+#include <nlohmann/json.hpp>
 
 #include "core/config.hpp"
+#include "client.hpp"
 #include "forward.hpp"
 #include "types.hpp"
 
@@ -18,12 +20,15 @@ namespace prnet {
 namespace rep {
 
 /**
- * class service
+ * class Service
  */
 
-class PRNET_DLL service
+class PRNET_DLL Service
 {
-    using reconnect_event = boost::signals2::signal< void () >;
+public:
+	using CallbackHandler = Client::CallbackHandler;
+
+	using reconnect_event = boost::signals2::signal< void () >;
     using disconnect_event = boost::signals2::signal< void ( std::error_code ec ) >;
     using temperature_event = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
     using printers_event = boost::signals2::signal< void ( std::vector< printer > printers ) >;
@@ -31,10 +36,17 @@ class PRNET_DLL service
     using groups_event = boost::signals2::signal< void ( std::string slug, std::vector< group > groups ) >;
     using models_event = boost::signals2::signal< void ( std::string slug, std::vector< model > models ) >;
 
+private:
+	struct Action
+	{
+		nlohmann::json request;
+		CallbackHandler handler;
+	};
+
 public:
-    service( boost::asio::io_context& context, settings settings );
-    service( service const& ) = delete;
-    ~service();
+    Service( boost::asio::io_context& context, Endpoint endpoint );
+    Service( Service const& ) = delete;
+    ~Service();
 
     bool connected() const { return connected_; }
 
@@ -53,7 +65,7 @@ public:
 
 private:
     void connect();
-    void send( request&& req );
+    void send( nlohmann::json&& request, CallbackHandler handler, bool priority = false );
     void send_next();
 
     void handle_connected();
@@ -61,11 +73,11 @@ private:
     void handle_error( std::error_code ec );
 
     boost::asio::io_context& context_;
-    settings settings_;
-    std::unique_ptr< client > client_;
+    Endpoint endpoint_;
+    std::unique_ptr< Client > client_;
     bool connected_ {};
     std::size_t retry_ {};
-    std::list< request > queued_;
+    std::list< Action > queued_;
 
     reconnect_event on_reconnect_;
     disconnect_event on_disconnect_;

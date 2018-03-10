@@ -21,15 +21,15 @@ int main( int argc, char const* const argv[] )
 
     asio::io_context context;
 
-    rep::settings settings { argv[ 1 ], argv[ 2 ], argv[ 3 ] };
+    rep::Endpoint settings { argv[ 1 ], argv[ 2 ], argv[ 3 ] };
 
     cout << "Connecting to " << settings.host() << ":" << settings.port() << endl;
 
-    rep::service service { context, settings };
-/*    service.list_printers( [&]( auto printers ) {
+    rep::Service service { context, settings };
+/*    Service.list_printers( [&]( auto printers ) {
         for ( auto const& printer : printers ) {
             cout << "PRINTER: " << printer.name() << " " << printer.slug() << endl;
-            service.list_groups( printer.slug(), [=]( auto groups ) {
+            Service.list_groups( printer.slug(), [=]( auto groups ) {
                 for ( auto const& group : groups ) {
                     cout << "GROUP FOR PRINTER: " << printer.name() << " - " << group.name() << endl;
                 }

@@ -19,7 +19,7 @@ static logger logger( "rep::types" );
  * class settings
  */
 
-settings::settings( string host, string port, string apikey )
+Endpoint::Endpoint( string host, string port, string apikey )
         : host_ { move( host ) }
         , port_ { move( port ) }
         , apikey_ { move( apikey ) } {}

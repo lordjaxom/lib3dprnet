@@ -180,7 +180,7 @@ private:
  * function upload_model
  */
 
-void upload_model( boost::asio::io_context& context, settings const& settings, model_ident const& ident,
+void upload_model( boost::asio::io_context& context, Endpoint const& settings, model_ident const& ident,
                    prnet::filesystem::path const& path, upload_callback cb )
 {
     asio::spawn( context, [&, cb { move( cb ) }]( auto yield ) {
