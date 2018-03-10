@@ -69,6 +69,7 @@ private:
     void send_next();
 
     void handle_connected();
+	void handle_login();
 	void handle_sent();
     void handle_error( std::error_code ec );
 

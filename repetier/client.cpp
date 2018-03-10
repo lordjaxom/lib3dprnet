@@ -58,6 +58,7 @@ void Client::connect( Endpoint endpoint, SuccessHandler handler )
 
         connected_ = true;
         handler();
+
         this->receive();
     } );
 }

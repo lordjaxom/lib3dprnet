@@ -162,16 +162,14 @@ void Service::connect()
 
 void Service::send( json&& request, CallbackHandler handler, bool priority )
 {
-    handler = [this, handler = move( handler )]( json const& data ) {
+    auto handlerWithCleanup = [this, handler = move( handler )]( auto const& data ) {
         handler( data );
         this->handle_sent();
     };
 
-    if ( priority ) {
-        queued_.push_front( { move( request ), move( handler ) } );
-    } else {
-        queued_.push_back( { move( request ), move( handler ) } );
-    }
+    logger.debug( "queueing request with priority ", priority );
+
+    queued_.emplace( priority ? queued_.begin() : queued_.end(), move( request ), move( handlerWithCleanup ) );
     if ( queued_.size() == 1 ) {
         send_next();
     }
@@ -179,6 +177,7 @@ void Service::send( json&& request, CallbackHandler handler, bool priority )
 
 void Service::send_next()
 {
+    logger.debug( "sending next request, connected=", connected_, ", queue=", queued_.size() );
     if ( connected_ && !queued_.empty() ) {
         auto& action = queued_.front();
         client_->send( action.request, action.handler );
@@ -187,14 +186,22 @@ void Service::send_next()
 
 void Service::handle_connected()
 {
+    logger.debug( "sending login request" );
     auto request = detail::makeRequest( "login" );
     request[ "data" ].emplace( "apikey", endpoint_.apikey() );
     send( move( request ), [this]( auto const& data ) {
         detail::checkResponseOk( data );
-        connected_ = true;
-        retry_ = 0;
-        on_reconnect_();
+        this->handle_login();
     }, true );
+}
+
+void Service::handle_login()
+{
+    logger.info( "successfully connected and logged in" );
+
+    connected_ = true;
+    retry_ = 0;
+    on_reconnect_();
 }
 
 void Service::handle_sent()
