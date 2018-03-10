@@ -1,13 +1,12 @@
 #include <chrono>
 #include <utility>
 
-#include <boost/asio/deadline_timer.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <nlohmann/json.hpp>
 
 #include "core/error.hpp"
 #include "core/logging.hpp"
 #include "service.hpp"
-#include "request.hpp"
 #include "client.hpp"
 
 using namespace std;
@@ -215,7 +214,7 @@ void Service::handle_error( error_code ec )
 
     logger.error( "error in server communication, reconnecting in ", timeout, " seconds: ", ec.message() );
 
-    auto timer = make_shared< asio::deadline_timer >( context_, boost::posix_time::seconds( timeout ) );
+    auto timer = make_shared< asio::steady_timer >( context_, chrono::seconds( timeout ) );
     timer->async_wait( [this, timer]( auto ) { this->connect(); } );
 }
 
