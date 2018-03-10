@@ -54,6 +54,15 @@ inline json makeRequest( string action, string slug )
 
 } // namespace detail
 
+
+/**
+ * class Service
+ */
+
+Service::Action::Action( json&& request, CallbackHandler&& handler )
+        : request( move( request ) )
+        , handler( move( handler ) ) {}
+
 Service::Service( asio::io_context &context, Endpoint endpoint )
         : context_( context )
         , endpoint_( move( endpoint ) )
@@ -65,9 +74,9 @@ Service::~Service() = default;
 
 void Service::request_printers()
 {
-	if ( on_printers_.empty() ) {
-		return;
-	}
+    if ( on_printers_.empty() ) {
+        return;
+    }
 
     send( detail::makeRequest( "listPrinter" ), [this]( auto const& data ) {
         on_printers_( data );
@@ -76,9 +85,9 @@ void Service::request_printers()
 
 void Service::request_config( string slug )
 {
-	if ( on_config_.empty() ) {
-		return;
-	}
+    if ( on_config_.empty() ) {
+        return;
+    }
 
     auto request = detail::makeRequest( "getPrinterConfig", slug );
     send( move( request ), [this, slug = move( slug )]( auto const& data ) mutable {
@@ -88,9 +97,9 @@ void Service::request_config( string slug )
 
 void Service::request_groups( string slug )
 {
-	if ( on_groups_.empty() ) {
-		return;
-	}
+    if ( on_groups_.empty() ) {
+        return;
+    }
 
     auto request = detail::makeRequest( "listModelGroups", slug );
     send( move( request ), [this, slug = move( slug )]( auto const& data ) mutable {
@@ -101,9 +110,9 @@ void Service::request_groups( string slug )
 
 void Service::request_models( string slug )
 {
-	if ( on_models_.empty() ) {
-		return;
-	}
+    if ( on_models_.empty() ) {
+        return;
+    }
 
     auto request = detail::makeRequest( "listModels", slug );
     send( move( request ), [this, slug = move( slug )]( auto const& data ) mutable {
@@ -162,31 +171,26 @@ void Service::connect()
 
 void Service::send( json&& request, CallbackHandler handler, bool priority )
 {
-    auto handlerWithCleanup = [this, handler = move( handler )]( auto const& data ) {
-        handler( data );
-        this->handle_sent();
-    };
-
-    logger.debug( "queueing request with priority ", priority );
-
-    queued_.emplace( priority ? queued_.begin() : queued_.end(), move( request ), move( handlerWithCleanup ) );
-    if ( queued_.size() == 1 ) {
-        send_next();
-    }
+    queued_.emplace( priority ? queued_.begin() : queued_.end(), move( request ), move( handler ) );
+    send_next( priority );
 }
 
-void Service::send_next()
+void Service::send_next( bool force )
 {
-    logger.debug( "sending next request, connected=", connected_, ", queue=", queued_.size() );
-    if ( connected_ && !queued_.empty() ) {
+    if ( ( connected_ || force ) && !pending_ && !queued_.empty() ) {
         auto& action = queued_.front();
-        client_->send( action.request, action.handler );
+        client_->send( action.request, [this, handler = action.handler]( auto const& data ) {
+            handler( data );
+            this->handle_sent();
+        } );
+        pending_ = true;
     }
 }
 
 void Service::handle_connected()
 {
     logger.debug( "sending login request" );
+
     auto request = detail::makeRequest( "login" );
     request[ "data" ].emplace( "apikey", endpoint_.apikey() );
     send( move( request ), [this]( auto const& data ) {
@@ -206,8 +210,9 @@ void Service::handle_login()
 
 void Service::handle_sent()
 {
-	queued_.pop_front();
-	send_next();
+    queued_.pop_front();
+    pending_ = false;
+    send_next();
 }
 
 void Service::handle_error( error_code ec )

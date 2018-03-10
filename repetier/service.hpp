@@ -39,6 +39,8 @@ public:
 private:
 	struct Action
 	{
+		Action( nlohmann::json&& request, CallbackHandler&& handler );
+
 		nlohmann::json request;
 		CallbackHandler handler;
 	};
@@ -66,7 +68,7 @@ public:
 private:
     void connect();
     void send( nlohmann::json&& request, CallbackHandler handler, bool priority = false );
-    void send_next();
+    void send_next( bool force = false );
 
     void handle_connected();
 	void handle_login();
@@ -77,6 +79,7 @@ private:
     Endpoint endpoint_;
     std::unique_ptr< Client > client_;
     bool connected_ {};
+	bool pending_ {};
     std::size_t retry_ {};
     std::list< Action > queued_;
 
