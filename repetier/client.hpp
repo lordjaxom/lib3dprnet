@@ -15,7 +15,6 @@
 #include "core/config.hpp"
 #include "core/optional.hpp"
 #include "forward.hpp"
-#include "types.hpp"
 
 namespace prnet {
 namespace rep {

@@ -10,6 +10,7 @@
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/multi_buffer.hpp>
 #include <boost/beast/websocket/stream.hpp>
+#include <nlohmann/json.hpp>
 
 #include "core/error.hpp"
 #include "core/logging.hpp"
@@ -75,7 +76,7 @@ void Client::send( json& request, CallbackHandler handler )
 
         stream_.async_write( asio::buffer( message ), yield );
         pending_ = { callbackId, move( handler ), asio::steady_timer( context_, chrono::seconds( 5 ) ) }; // TODO
-        pending_.timer->async_wait( [this]( error_code ec ) { this->handle_timeout( ec ); } );
+        pending_.timer->async_wait( [this, callbackId]( error_code ec ) { this->handle_timeout( callbackId, ec ); } );
     } );
 }
 
