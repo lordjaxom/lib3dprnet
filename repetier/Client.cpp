@@ -13,7 +13,6 @@
 
 #include "core/error.hpp"
 #include "core/logging.hpp"
-#include "request.hpp"
 #include "client.hpp"
 #include "types.hpp"
 
@@ -75,7 +74,8 @@ void Client::send( json& request, CallbackHandler handler )
         logger.debug( ">>> ", message );
 
         stream_.async_write( asio::buffer( message ), yield );
-        pending_ = { callbackId, move( handler ) };
+        pending_ = { callbackId, move( handler ), asio::steady_timer( context_, chrono::seconds( 5 ) ) }; // TODO
+        pending_.timer->async_wait( [this]( error_code ec ) { this->handle_timeout( ec ); } );
     } );
 }
 
@@ -151,6 +151,7 @@ void Client::handle_callback( size_t callbackId, json const& data )
         return;
     }
 
+    pending_.timer->cancel();
     pending_.handler( data );
     pending_ = {};
 }
@@ -172,6 +173,24 @@ void Client::handle_error( error_code ec )
         connected_ = false;
         errorHandler_( ec );
     }
+}
+
+void Client::handle_timeout( size_t callbackId, error_code ec )
+{
+    if ( ec == make_error_code( asio::error::operation_aborted ) ) {
+        return;
+    }
+
+    char const* what = "error";
+    if ( !ec ) {
+        what = "timeout";
+        ec = make_error_code( prnet_errc::timeout );
+    }
+
+    logger.error( what, " waiting for callback ", callbackId, ": ", ec.message() );
+
+    pending_ = {};
+    errorHandler_( ec );
 }
 
 } // namespace rep

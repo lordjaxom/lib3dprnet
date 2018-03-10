@@ -7,6 +7,7 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/steady_timer.hpp>
 #include <boost/beast/websocket/stream.hpp>
 #include <boost/operators.hpp>
 #include <nlohmann/json_fwd.hpp>
@@ -38,6 +39,7 @@ private:
 
         std::size_t callbackId;
         CallbackHandler handler;
+        optional< boost::asio::steady_timer > timer;
     };
 
 public:
@@ -77,6 +79,7 @@ private:
     void handle_callback( std::size_t callbackId, nlohmann::json const& data );
     void handle_event( nlohmann::json const& event );
     void handle_error( std::error_code ec );
+    void handle_timeout( std::size_t callbackId, std::error_code ec );
 
     boost::asio::io_context& context_;
     ErrorHandler errorHandler_;

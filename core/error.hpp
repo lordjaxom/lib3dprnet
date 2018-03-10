@@ -17,7 +17,8 @@ enum class prnet_errc : int
     not_ok,
     exception,
     server_error,
-    protocol_violation
+    protocol_violation,
+    timeout
 };
 
 

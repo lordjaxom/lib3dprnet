@@ -17,6 +17,7 @@ string prnet_category::message( int value ) const
         case prnet_errc::exception: return "exception caught";
         case prnet_errc::server_error: return "server side error";
         case prnet_errc::protocol_violation: return "protocol violation";
+        case prnet_errc::timeout: return "timeout";
     }
     return "unknown prnet::prnet_category error";
 }

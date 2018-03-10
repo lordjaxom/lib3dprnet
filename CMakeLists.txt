@@ -23,8 +23,6 @@ add_library(3dprnet SHARED
         repetier/service.cpp
         repetier/service.hpp
         repetier/forward.hpp
-        repetier/request.cpp
-        repetier/request.hpp
         repetier/client.cpp
         repetier/client.hpp
         repetier/types.cpp
