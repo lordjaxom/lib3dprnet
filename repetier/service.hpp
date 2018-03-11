@@ -57,6 +57,11 @@ public:
     void request_groups( std::string slug );
     void request_models( std::string slug );
 
+	void add_model_group( std::string slug, std::string group );
+    void delete_model_group( std::string slug, std::string group, bool deleteModels );
+    void remove_model( std::string slug, std::size_t id );
+    void move_model_to_group( std::string slug, std::size_t id, std::string group );
+
     void on_reconnect( reconnect_event::slot_type const& handler );
     void on_disconnect( disconnect_event::slot_type const& handler );
     void on_temperature( temperature_event::slot_type const& handler );

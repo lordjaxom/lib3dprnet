@@ -26,7 +26,9 @@ inline long retryTimeout( size_t retry )
     switch ( retry ) {
         case 0: return 0;
         case 1: return 2;
-        default: return 5;
+        case 2: return 5;
+        case 3: return 10;
+        default: return 30;
     }
 }
 
@@ -120,6 +122,42 @@ void Service::request_models( string slug )
     } );
 }
 
+void Service::add_model_group( string slug, string group )
+{
+    auto request = detail::makeRequest( "addModelGroup", move( slug ) );
+    request[ "data" ].emplace( "groupName", move( group ) );
+    send( move( request ), [this]( auto const& data ) {
+        detail::checkResponseOk( data );
+    } );
+}
+
+void Service::delete_model_group( string slug, string group, bool deleteModels )
+{
+    auto request = detail::makeRequest( "delModelGroup", move( slug ) );
+    request[ "data" ].emplace( "groupName", move( group ) );
+    request[ "data" ].emplace( "delFiles", deleteModels );
+    send( move( request ), [this]( auto const& data ) {
+        detail::checkResponseOk( data );
+    } );
+}
+
+void Service::remove_model( string slug, size_t id )
+{
+    auto request = detail::makeRequest( "removeModel", move( slug ) );
+    request[ "data" ].emplace( "id", id );
+    send( move( request ), [this]( auto const& ) {} );
+}
+
+void Service::move_model_to_group( string slug, size_t id, string group )
+{
+    auto request = detail::makeRequest( "moveModelFileToGroup", move( slug ) );
+    request[ "data" ].emplace( "id", id );
+    request[ "data" ].emplace( "groupName", move( group ) );
+    send( move( request ), [this]( auto const& data ) {
+        detail::checkResponseOk( data );
+    } );
+}
+
 void Service::on_reconnect( reconnect_event::slot_type const& handler )
 {
     on_reconnect_.connect( handler );
@@ -177,6 +215,7 @@ void Service::send( json&& request, CallbackHandler handler, bool priority )
 
 void Service::send_next( bool force )
 {
+	logger.debug( "send_next( ", force, " ): connected_ = ", connected_, ", pending_ = ", pending_, ", queued_ = ", queued_.size() );
     if ( ( connected_ || force ) && !pending_ && !queued_.empty() ) {
         auto& action = queued_.front();
         client_->send( action.request, [this, handler = action.handler]( auto const& data ) {
@@ -219,6 +258,7 @@ void Service::handle_error( error_code ec )
 {
     connected_ = false;
     client_ = nullptr;
+    pending_ = false;
 
     on_disconnect_( ec );
 

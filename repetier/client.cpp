@@ -70,7 +70,7 @@ void Client::send( json& request, CallbackHandler handler )
 
     checked_spawn( [this, &request, handler = move( handler )]( auto yield ) mutable {
 		auto callbackId = ++lastCallbackId_;
-        request.emplace( "callback_id", callbackId );
+        request[ "callback_id" ] = callbackId;
         auto message = request.dump();
 
         logger.debug( ">>> ", message );
@@ -183,13 +183,12 @@ void Client::handle_timeout( size_t callbackId, error_code ec )
         return;
     }
 
-    char const* what = "error";
-    if ( !ec ) {
-        what = "timeout";
+    if ( ec ) {
+        logger.error( "error waiting for callback ", callbackId, ": ", ec.message() );
+    } else {
+        logger.error( "timeout waiting for callback ", callbackId );
         ec = make_error_code( prnet_errc::timeout );
     }
-
-    logger.error( what, " waiting for callback ", callbackId, ": ", ec.message() );
 
     pending_ = {};
     errorHandler_( ec );
