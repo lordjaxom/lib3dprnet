@@ -16,13 +16,22 @@ namespace rep {
 static logger logger( "rep::types" );
 
 /**
- * class settings
+ * class Endpoint
  */
+
+Endpoint::Endpoint() = default;
 
 Endpoint::Endpoint( string host, string port, string apikey )
         : host_ { move( host ) }
         , port_ { move( port ) }
         , apikey_ { move( apikey ) } {}
+
+void from_json( nlohmann::json const& src, Endpoint& dst )
+{
+    dst.host_ = src.at( "host" );
+    dst.port_ = src.at( "port" );
+    dst.apikey_ = src.at( "apikey" );
+}
 
 
 /**

@@ -20,7 +20,10 @@ namespace rep {
 
 class PRNET_DLL Endpoint
 {
+    friend void PRNET_DLL from_json( nlohmann::json const& src, Endpoint& dst );
+
 public:
+    Endpoint();
     Endpoint( std::string host, std::string port, std::string apikey );
 
     std::string const& host() const { return host_; }
@@ -58,9 +61,9 @@ private:
  * class extruder_config
  */
 
-class extruder_config
+class PRNET_DLL extruder_config
 {
-    friend void from_json( nlohmann::json const& src, extruder_config& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, extruder_config& dst );
 
 public:
     int max_temperature() const { return maxTemp_; }
@@ -74,9 +77,9 @@ private:
  * class heatbed_config
  */
 
-class heatbed_config
+class PRNET_DLL heatbed_config
 {
-    friend void from_json( nlohmann::json const& src, heatbed_config& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, heatbed_config& dst );
 
 public:
     int max_temperature() const { return maxTemp_; }
@@ -92,7 +95,7 @@ private:
 
 class PRNET_DLL printer_config
 {
-    friend void from_json( nlohmann::json const& src, printer_config& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, printer_config& dst );
 
 public:
     bool active() const { return active_; }
@@ -118,7 +121,7 @@ private:
 
 class PRNET_DLL printer
 {
-    friend void from_json( nlohmann::json const& src, printer& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, printer& dst );
 
 public:
     enum state_t
@@ -151,7 +154,7 @@ string_view PRNET_DLL to_string( printer::state_t state );
 
 class PRNET_DLL group
 {
-    friend void from_json( nlohmann::json const& src, group& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, group& dst );
 
 public:
     std::string const& name() const { return name_; }
@@ -170,7 +173,7 @@ private:
 
 class PRNET_DLL model
 {
-    friend void from_json( nlohmann::json const& src, model& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, model& dst );
 
 public:
     std::size_t id() const { return id_; }
@@ -200,7 +203,7 @@ private:
 
 class PRNET_DLL temperature
 {
-    friend void from_json( nlohmann::json const& src, temperature& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, temperature& dst );
 
 public:
     enum controller_t

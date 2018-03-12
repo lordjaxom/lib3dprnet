@@ -28,13 +28,13 @@ class PRNET_DLL Service
 public:
 	using CallbackHandler = Client::CallbackHandler;
 
-	using reconnect_event = boost::signals2::signal< void () >;
-    using disconnect_event = boost::signals2::signal< void ( std::error_code ec ) >;
-    using temperature_event = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
-    using printers_event = boost::signals2::signal< void ( std::vector< printer > printers ) >;
-    using config_event = boost::signals2::signal< void ( std::string slug, printer_config config ) >;
-    using groups_event = boost::signals2::signal< void ( std::string slug, std::vector< group > groups ) >;
-    using models_event = boost::signals2::signal< void ( std::string slug, std::vector< model > models ) >;
+	using ReconnectEvent = boost::signals2::signal< void () >;
+    using DisconnectEvent = boost::signals2::signal< void ( std::error_code ec ) >;
+    using TemperatureEvent = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
+    using PrintersEvent = boost::signals2::signal< void ( std::vector< printer > printers ) >;
+    using ConfigEvent = boost::signals2::signal< void ( std::string slug, printer_config config ) >;
+    using GroupsEvent = boost::signals2::signal< void ( std::string slug, std::vector< group > groups ) >;
+    using ModelsEvent = boost::signals2::signal< void ( std::string slug, std::vector< model > models ) >;
 
 private:
 	struct Action
@@ -62,13 +62,13 @@ public:
     void remove_model( std::string slug, std::size_t id );
     void move_model_to_group( std::string slug, std::size_t id, std::string group );
 
-    void on_reconnect( reconnect_event::slot_type const& handler );
-    void on_disconnect( disconnect_event::slot_type const& handler );
-    void on_temperature( temperature_event::slot_type const& handler );
-    void on_printers( printers_event::slot_type const& handler );
-    void on_config( config_event::slot_type const& handler );
-    void on_groups( groups_event::slot_type const& handler );
-    void on_models( models_event::slot_type const& handler );
+    void on_reconnect( ReconnectEvent::slot_type const& handler );
+    void on_disconnect( DisconnectEvent::slot_type const& handler );
+    void on_temperature( TemperatureEvent::slot_type const& handler );
+    void on_printers( PrintersEvent::slot_type const& handler );
+    void on_config( ConfigEvent::slot_type const& handler );
+    void on_groups( GroupsEvent::slot_type const& handler );
+    void on_models( ModelsEvent::slot_type const& handler );
 
 private:
     void connect();
@@ -88,13 +88,13 @@ private:
     std::size_t retry_ {};
     std::list< Action > queued_;
 
-    reconnect_event on_reconnect_;
-    disconnect_event on_disconnect_;
-    temperature_event on_temperature_;
-    printers_event on_printers_;
-    config_event on_config_;
-    groups_event on_groups_;
-    models_event on_models_;
+    ReconnectEvent on_reconnect_;
+    DisconnectEvent on_disconnect_;
+    TemperatureEvent on_temperature_;
+    PrintersEvent on_printers_;
+    ConfigEvent on_config_;
+    GroupsEvent on_groups_;
+    ModelsEvent on_models_;
 };
 
 } // namespace rep

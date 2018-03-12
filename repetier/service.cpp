@@ -158,37 +158,37 @@ void Service::move_model_to_group( string slug, size_t id, string group )
     } );
 }
 
-void Service::on_reconnect( reconnect_event::slot_type const& handler )
+void Service::on_reconnect( ReconnectEvent::slot_type const& handler )
 {
     on_reconnect_.connect( handler );
 }
 
-void Service::on_disconnect( disconnect_event::slot_type const& handler )
+void Service::on_disconnect( DisconnectEvent::slot_type const& handler )
 {
     on_disconnect_.connect( handler );
 }
 
-void Service::on_temperature( temperature_event::slot_type const& handler )
+void Service::on_temperature( TemperatureEvent::slot_type const& handler )
 {
     on_temperature_.connect( handler );
 }
 
-void Service::on_printers( printers_event::slot_type const& handler )
+void Service::on_printers( PrintersEvent::slot_type const& handler )
 {
     on_printers_.connect( handler );
 }
 
-void Service::on_config( config_event::slot_type const& handler )
+void Service::on_config( ConfigEvent::slot_type const& handler )
 {
     on_config_.connect( handler );
 }
 
-void Service::on_groups( groups_event::slot_type const& handler )
+void Service::on_groups( GroupsEvent::slot_type const& handler )
 {
     on_groups_.connect( handler );
 }
 
-void Service::on_models( models_event::slot_type const& handler )
+void Service::on_models( ModelsEvent::slot_type const& handler )
 {
     on_models_.connect( handler );
 }
