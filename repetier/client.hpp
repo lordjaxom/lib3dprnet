@@ -15,6 +15,7 @@
 #include "core/config.hpp"
 #include "core/optional.hpp"
 #include "forward.hpp"
+#include "types.hpp"
 
 namespace prnet {
 namespace rep {
@@ -34,11 +35,11 @@ public:
 private:
     struct Pending
     {
-        bool empty() const { return callbackId == 0; }
+        Pending( std::size_t callbackId, CallbackHandler&& handler, boost::asio::steady_timer&& timer );
 
         std::size_t callbackId;
         CallbackHandler handler;
-        optional< boost::asio::steady_timer > timer;
+        boost::asio::steady_timer timer;
     };
 
 public:
@@ -85,7 +86,7 @@ private:
 
     boost::beast::websocket::stream< boost::asio::ip::tcp::socket > stream_;
     bool connected_ {};
-    Pending pending_ {};
+    optional< Pending > pending_;
     std::unordered_map< std::string, EventHandler > subscriptions_;
 	std::size_t lastCallbackId_ {};
 };

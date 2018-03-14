@@ -34,6 +34,11 @@ static logger logger( "rep::Client" );
  * class Client
  */
 
+Client::Pending::Pending( size_t callbackId, CallbackHandler&& handler, asio::steady_timer&& timer )
+        : callbackId( callbackId )
+        , handler( move( handler ) )
+        , timer( move( timer ) ) {}
+
 Client::Client( asio::io_context& context, ErrorHandler handler )
         : context_( context )
         , errorHandler_( move( handler ) )
@@ -66,7 +71,7 @@ void Client::connect( Endpoint endpoint, SuccessHandler handler )
 void Client::send( json& request, CallbackHandler handler )
 {
     assert( connected_ );
-    assert( pending_.empty() );
+    assert( pending_ == nullopt );
 
     checked_spawn( [this, &request, handler = move( handler )]( auto yield ) mutable {
 		auto callbackId = ++lastCallbackId_;
@@ -76,8 +81,8 @@ void Client::send( json& request, CallbackHandler handler )
         logger.debug( ">>> ", message );
 
         stream_.async_write( asio::buffer( message ), yield );
-        pending_ = { callbackId, move( handler ), asio::steady_timer( context_, chrono::seconds( 5 ) ) }; // TODO
-        pending_.timer->async_wait( [this, callbackId]( error_code ec ) { this->handle_timeout( callbackId, ec ); } );
+        pending_ = Pending( callbackId, move( handler ), { context_, chrono::seconds( 5 ) } ); // TODO
+        pending_->timer.async_wait( [this, callbackId]( error_code ec ) { this->handle_timeout( callbackId, ec ); } );
     } );
 }
 
@@ -144,18 +149,18 @@ void Client::handle_message( json const& message )
 
 void Client::handle_callback( size_t callbackId, json const& data )
 {
-    if ( pending_.empty() ) {
+    if ( pending_ == nullopt ) {
         logger.error( "received callback ", callbackId, " although no pending request exists" );
         return;
     }
-    if ( pending_.callbackId != callbackId ) {
-        logger.error( "received callback ", callbackId, " although waiting for callback ", pending_.callbackId );
+    if ( pending_->callbackId != callbackId ) {
+        logger.error( "received callback ", callbackId, " although waiting for callback ", pending_->callbackId );
         return;
     }
 
-    pending_.timer->cancel();
-    pending_.handler( data );
-    pending_ = {};
+    pending_->timer.cancel();
+    pending_->handler( data );
+    pending_ = nullopt;
 }
 
 void Client::handle_event( json const& event )
