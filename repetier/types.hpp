@@ -58,12 +58,12 @@ private:
 
 
 /**
- * class extruder_config
+ * class ExtruderConfig
  */
 
-class PRNET_DLL extruder_config
+class PRNET_DLL ExtruderConfig
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, extruder_config& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, ExtruderConfig& dst );
 
 public:
     int max_temperature() const { return maxTemp_; }
@@ -74,12 +74,12 @@ private:
 
 
 /**
- * class heatbed_config
+ * class HeatbedConfig
  */
 
-class PRNET_DLL heatbed_config
+class PRNET_DLL HeatbedConfig
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, heatbed_config& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, HeatbedConfig& dst );
 
 public:
     int max_temperature() const { return maxTemp_; }
@@ -90,41 +90,41 @@ private:
 
 
 /**
- * class printer_config
+ * class PrinterConfig
  */
 
-class PRNET_DLL printer_config
+class PRNET_DLL PrinterConfig
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, printer_config& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, PrinterConfig& dst );
 
 public:
     bool active() const { return active_; }
     std::string const& slug() const { return slug_; }
     std::string const& name() const { return name_; }
     std::string const& firmwareName() const { return firmwareName_; }
-    std::vector< extruder_config > const& extruders() const { return extruders_; }
-    optional< heatbed_config > const& heatbed() const { return heatbed_; }
+    std::vector< ExtruderConfig > const& extruders() const { return extruders_; }
+    optional< HeatbedConfig > const& heatbed() const { return heatbed_; }
 
 private:
     bool active_ {};
     std::string slug_;
     std::string name_;
     std::string firmwareName_;
-    std::vector< extruder_config > extruders_;
-    optional< heatbed_config > heatbed_;
+    std::vector< ExtruderConfig > extruders_;
+    optional< HeatbedConfig > heatbed_;
 };
 
 
 /**
- * class printer
+ * class Printer
  */
 
-class PRNET_DLL printer
+class PRNET_DLL Printer
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, printer& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, Printer& dst );
 
 public:
-    enum state_t
+    enum State
     {
         disabled, offline, idle, printing
     };
@@ -133,7 +133,7 @@ public:
     std::string const& slug() const { return slug_; }
     std::string const& job() const { return job_; }
 
-    state_t state() const;
+    State state() const;
 
 private:
     static bool printingJob( std::string const& job );
@@ -145,16 +145,16 @@ private:
     std::string job_;
 };
 
-string_view PRNET_DLL to_string( printer::state_t state );
+string_view PRNET_DLL to_string( Printer::State state );
 
 
 /**
- * class group
+ * class ModelGroup
  */
 
-class PRNET_DLL group
+class PRNET_DLL ModelGroup
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, group& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, ModelGroup& dst );
 
 public:
     std::string const& name() const { return name_; }
@@ -168,12 +168,12 @@ private:
 
 
 /**
- * class model
+ * class Model
  */
 
-class PRNET_DLL model
+class PRNET_DLL Model
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, model& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, Model& dst );
 
 public:
     std::size_t id() const { return id_; }
@@ -198,20 +198,20 @@ private:
 
 
 /**
- * class temperature
+ * class Temperature
  */
 
-class PRNET_DLL temperature
+class PRNET_DLL Temperature
 {
-    friend void PRNET_DLL from_json( nlohmann::json const& src, temperature& dst );
+    friend void PRNET_DLL from_json( nlohmann::json const& src, Temperature& dst );
 
 public:
-    enum controller_t
+    enum Controller
     {
         extruder, heatbed
     };
 
-    controller_t controller() const { return controller_; }
+    Controller controller() const { return controller_; }
     std::size_t controller_index() const { return controllerIndex_; }
     double wanted() const { return wanted_; }
     double actual() const { return actual_; }
@@ -219,13 +219,13 @@ public:
     std::string controller_name() const;
 
 private:
-    controller_t controller_ {};
+    Controller controller_ {};
     std::size_t controllerIndex_ {};
     double wanted_ {};
     double actual_ {};
 };
 
-string_view PRNET_DLL to_string( temperature::controller_t controller );
+string_view PRNET_DLL to_string( Temperature::Controller controller );
 
 } // namespace rep
 } // namespace prnet

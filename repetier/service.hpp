@@ -30,11 +30,11 @@ public:
 
 	using ReconnectEvent = boost::signals2::signal< void () >;
     using DisconnectEvent = boost::signals2::signal< void ( std::error_code ec ) >;
-    using TemperatureEvent = boost::signals2::signal< void ( std::string slug, temperature temp ) >;
-    using PrintersEvent = boost::signals2::signal< void ( std::vector< printer > printers ) >;
-    using ConfigEvent = boost::signals2::signal< void ( std::string slug, printer_config config ) >;
-    using GroupsEvent = boost::signals2::signal< void ( std::string slug, std::vector< group > groups ) >;
-    using ModelsEvent = boost::signals2::signal< void ( std::string slug, std::vector< model > models ) >;
+    using TemperatureEvent = boost::signals2::signal< void ( std::string slug, Temperature temp ) >;
+    using PrintersEvent = boost::signals2::signal< void ( std::vector< Printer > printers ) >;
+    using ConfigEvent = boost::signals2::signal< void ( std::string slug, PrinterConfig config ) >;
+    using GroupsEvent = boost::signals2::signal< void ( std::string slug, std::vector< ModelGroup > groups ) >;
+    using ModelsEvent = boost::signals2::signal< void ( std::string slug, std::vector< Model > models ) >;
 
 private:
 	struct Action

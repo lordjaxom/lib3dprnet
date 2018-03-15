@@ -10,7 +10,7 @@ namespace prnet {
 namespace rep {
 
 class model_ident;
-class printer;
+class Printer;
 class Request;
 class Endpoint;
 class Client;
