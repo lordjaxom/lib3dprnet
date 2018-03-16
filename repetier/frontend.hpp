@@ -37,6 +37,7 @@ private:
         std::vector< Model > models;
     };
 
+public:
     Frontend( boost::asio::io_context& context, Endpoint endpoint );
     Frontend( Frontend const& ) = delete;
     ~Frontend();
