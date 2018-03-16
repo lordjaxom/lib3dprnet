@@ -88,13 +88,13 @@ private:
     std::size_t retry_ {};
     std::list< Action > queued_;
 
-    ReconnectEvent on_reconnect_;
-    DisconnectEvent on_disconnect_;
-    TemperatureEvent on_temperature_;
-    PrintersEvent on_printers_;
-    ConfigEvent on_config_;
-    GroupsEvent on_groups_;
-    ModelsEvent on_models_;
+	ReconnectEvent on_reconnect_;
+	DisconnectEvent on_disconnect_;
+	TemperatureEvent on_temperature_;
+	PrintersEvent on_printers_;
+	ConfigEvent on_config_;
+	GroupsEvent on_groups_;
+	ModelsEvent on_models_;
 };
 
 } // namespace rep

@@ -28,7 +28,9 @@ add_library(3dprnet SHARED
         repetier/types.cpp
         repetier/types.hpp
         repetier/upload.cpp
-        repetier/upload.hpp)
+        repetier/upload.hpp
+        repetier/frontend.cpp
+        repetier/frontend.hpp)
 target_compile_definitions(3dprnet PUBLIC ${Boost_DEFINITIONS})
 target_include_directories(3dprnet PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(3dprnet PUBLIC ${Boost_INCLUDE_DIRS} ${json_INCLUDE_DIRS})

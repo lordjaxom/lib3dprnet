@@ -10,10 +10,16 @@ namespace prnet {
 namespace rep {
 
 class model_ident;
-class Printer;
-class Request;
-class Endpoint;
 class Client;
+class Endpoint;
+class ExtruderConfig;
+class Frontend;
+class HeatbedConfig;
+class Model;
+class ModelGroup;
+class Printer;
+class PrinterConfig;
+class Temperature;
 
 } // namespace rep
 } // namespace prnet
