@@ -1,6 +1,8 @@
+#include <locale>
 #include <ostream>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <boost/asio/connect.hpp>
 #include <boost/asio/spawn.hpp>
@@ -40,6 +42,15 @@ namespace rep {
 static Logger logger( "rep::Upload" );
 
 namespace detail {
+
+std::vector< char > localizePath( filesystem::path const& path )
+{
+    auto native = path.native();
+    vector< char > result( native.size() + 1 );
+    std::use_facet< std::ctype< wchar_t > >( std::locale( "" ) )
+            .narrow( &native[ 0 ], &native[ native.size() ], '_', &result[ 0 ] );
+    return move( result );
+}
 
 /**
  * struct upload_body
@@ -103,7 +114,8 @@ public:
 
         field_ = body_.fields_.cbegin();
         if ( body_.path_ ) {
-            file_.open( body_.path_->u8string().c_str(), boost::beast::file_mode::read, ec );
+            auto localPath = detail::localizePath( *body_.path_ );
+            file_.open( &localPath[ 0 ], boost::beast::file_mode::read, ec );
         }
     }
 
