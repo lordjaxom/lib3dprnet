@@ -18,7 +18,7 @@ namespace prnet {
 
 namespace detail {
 
-ostream& log_timestamp( ostream &os )
+ostream& logTimestamp( ostream &os )
 {
 	auto timestamp { chrono::high_resolution_clock::now().time_since_epoch() };
 	auto seconds { chrono::duration_cast< chrono::seconds >( timestamp ) };
@@ -36,13 +36,13 @@ ostream& log_timestamp( ostream &os )
 			<< setw( 6 ) << setfill( '0' ) << micros.count();
 }
 
-ostream& log_pid( ostream& os )
+ostream& logPid( ostream& os )
 {
 	return os << setw( 5 ) << setfill( ' ' ) << getpid();
 }
 
 template< size_t L >
-string build_tag( string&& tag )
+string buildTag( string&& tag )
 {
 	if ( tag.length() == L ) {
 		return move( tag );
@@ -64,36 +64,37 @@ string build_tag( string&& tag )
 
 } // namespace detail
 
-logger::level const logger::Debug   { "DEBUG", 3 };
-logger::level const logger::Info    { "INFO ", 2 };
-logger::level const logger::Warning { "WARN ", 1 };
-logger::level const logger::Error   { "ERROR", 0 };
+Logger::Level const Logger::Level::debug   { "DEBUG", 3 };
+Logger::Level const Logger::Level::info    { "INFO ", 2 };
+Logger::Level const Logger::Level::warning { "WARN ", 1 };
+Logger::Level const Logger::Level::error   { "ERROR", 0 };
 
-logger::level const* logger::level_ = &logger::Warning;
-shared_ptr< ostream > logger::output_( &cerr, []( ostream const* ) {} );
+Logger::Level const* Logger::level_ = &Logger::Level::warning;
+shared_ptr< ostream > Logger::output_( &cerr, []( ostream const* ) {} );
+recursive_mutex Logger::mutex_;
 
-bool logger::is( level const& level )
+bool Logger::is( Level const& level )
 {
 	return level_->level >= level.level;
 }
 
-void logger::threshold( level const& level )
+void Logger::threshold( Level const& level )
 {
 	level_ = &level;
 }
 
-void logger::output( ostream& output )
+void Logger::output( ostream& output )
 {
 	output_.reset( &output, []( ostream const* ) {} );
 }
 
-void logger::output( char const* output )
+void Logger::output( char const* output )
 {
 	output_.reset( new ofstream( output, ios::out | ios::app ) );
 }
 
-logger::logger( string tag )
-	: tag_( detail::build_tag< tagLength >( move( tag ) ) )
+Logger::Logger( string tag )
+	: tag_( detail::buildTag< tagLength >( move( tag ) ) )
 {
 }
 

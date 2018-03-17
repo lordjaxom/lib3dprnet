@@ -22,7 +22,7 @@ namespace asio = boost::asio;
 namespace prnet {
 namespace rep {
 
-static logger logger( "rep::Service" );
+static Logger logger( "rep::Service" );
     
 namespace detail {
     

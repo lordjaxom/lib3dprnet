@@ -32,7 +32,7 @@ using tcp = asio::ip::tcp;
 namespace prnet {
 namespace rep {
 
-static logger logger( "rep::Client" );
+static Logger logger( "rep::Client" );
 
 /**
  * class Client

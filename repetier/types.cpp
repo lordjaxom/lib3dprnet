@@ -13,7 +13,7 @@ using namespace nlohmann;
 namespace prnet {
 namespace rep {
 
-static logger logger( "rep::types" );
+static Logger logger( "rep::types" );
 
 /**
  * class Endpoint

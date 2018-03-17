@@ -37,7 +37,7 @@ using tcp = asio::ip::tcp;
 namespace prnet {
 namespace rep {
 
-static logger logger( "rep::Upload" );
+static Logger logger( "rep::Upload" );
 
 namespace detail {
 

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -13,87 +14,93 @@ namespace prnet {
 
 namespace detail {
 
-std::ostream& PRNET_DLL log_timestamp( std::ostream &os );
-std::ostream& PRNET_DLL log_pid( std::ostream &os );
+std::ostream& PRNET_DLL logTimestamp( std::ostream &os );
+std::ostream& PRNET_DLL logPid( std::ostream &os );
 
-inline void log_write( std::ostream& os )
+inline void logWrite( std::ostream &os )
 {
 	os << std::endl;
 }
 
 template< typename Arg0, typename ...Args >
-void log_write( std::ostream& os, Arg0&& arg0, Args&&... args )
+void logWrite( std::ostream& os, Arg0&& arg0, Args&&... args )
 {
 	os << std::forward< Arg0 >( arg0 );
-	log_write( os, std::forward< Args >( args )... );
+    logWrite( os, std::forward<Args>( args )... );
 }
 
 template< typename ...Args >
-void log_message( std::ostream& os, std::string const &tag, char const *level, Args &&... args )
+void logMessage( std::ostream& os, std::string const &tag, char const *level, Args &&... args )
 {
-	log_write( os, log_timestamp, " [", log_pid, "] [", tag, "] [", level, "] ", std::forward< Args >( args )... );
+    logWrite( os, logTimestamp, " [", logPid, "] [", tag, "] [", level, "] ", std::forward< Args >( args )... );
 }
 
 } // namespace detail
 
-class PRNET_DLL logger
+class PRNET_DLL Logger
 {
-	struct level
+public:
+	struct PRNET_DLL Level
 	{
+        static Level const debug;
+        static Level const info;
+        static Level const warning;
+        static Level const error;
+
 		char const* name;
 		unsigned level;
 	};
 
+private:
+	using Lock = std::lock_guard< std::recursive_mutex >;
+
 	static constexpr std::size_t tagLength = 15;
 
-	static bool is( level const& level );
+	static bool is( Level const& level );
 
-	static level const* level_;
+	static Level const* level_;
 	static std::shared_ptr< std::ostream > output_;
+	static std::recursive_mutex mutex_;
 
 public:
-	static level const Debug;
-	static level const Info;
-	static level const Warning;
-	static level const Error;
-
-	static void threshold( level const& level );
+	static void threshold( Level const& level );
 	static void output( std::ostream& output );
 	static void output( char const* output );
 
-	explicit logger( std::string tag );
-	logger( logger const& ) = delete;
+	explicit Logger( std::string tag );
+	Logger( Logger const& ) = delete;
 
 	template< typename ...Args >
 	void debug( Args&&... args )
 	{
-		log( Debug, std::forward< Args >( args )... );
+		log( Level::debug, std::forward< Args >( args )... );
 	}
 
 	template< typename ...Args >
 	void info( Args&&... args )
 	{
-		log( Info, std::forward< Args >( args )... );
+		log( Level::info, std::forward< Args >( args )... );
 	}
 
 	template< typename ...Args >
 	void warning( Args&&... args )
 	{
-		log( Warning, std::forward< Args >( args )... );
+		log( Level::warning, std::forward< Args >( args )... );
 	}
 
 	template< typename ...Args >
 	void error( Args&&... args )
 	{
-		log( Error, std::forward< Args >( args )... );
+		log( Level::error, std::forward< Args >( args )... );
 	}
 
 private:
 	template< typename ...Args >
-	void log( level const& level, Args&&... args )
+	void log( Level const& level, Args&&... args )
 	{
 		if ( is( level ) ) {
-			detail::log_message( *output_, tag_, level.name, std::forward< Args >( args )... );
+            Lock lock( mutex_ );
+			detail::logMessage( *output_, tag_, level.name, std::forward< Args >( args )... );
 		}
 	}
 

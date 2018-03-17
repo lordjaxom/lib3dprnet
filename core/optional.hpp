@@ -1,7 +1,7 @@
 #ifndef LIB3DPRNET_CORE_OPTIONAL_HPP
 #define LIB3DPRNET_CORE_OPTIONAL_HPP
 
-#if __has_include( <optional> )
+#if __cplusplus >= 201700 && __has_include( <optional> )
 #   include <optional>
 #   define PRNET_OPTIONAL_NAMESPACE std
 #elif __has_include( <experimental/optional> )
