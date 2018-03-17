@@ -6,6 +6,7 @@
 #include <string>
 #include <system_error>
 
+#include <boost/asio/io_context.hpp>
 #include <boost/signals2/signal.hpp>
 #include <nlohmann/json_fwd.hpp>
 

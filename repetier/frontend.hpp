@@ -1,18 +1,15 @@
 #ifndef LIB3DPRNET_REPETIER_FRONTEND_HPP
 #define LIB3DPRNET_REPETIER_FRONTEND_HPP
 
-#include <mutex>
+#include <memory>
 #include <string>
-#include <unordered_map>
+#include <system_error>
 #include <vector>
 
 #include <boost/asio/io_context.hpp>
 #include <boost/signals2/signal.hpp>
 
 #include "core/config.hpp"
-#include "core/filesystem.hpp"
-#include "core/optional.hpp"
-#include "service.hpp"
 #include "types.hpp"
 #include "upload.hpp"
 
@@ -26,7 +23,7 @@ namespace rep {
 class PRNET_DLL Frontend
 {
 public:
-    using Handler = Service::Handler;
+    using Handler = std::function< void () >;
 
     using ReconnectEvent = boost::signals2::signal< void () >;
     using DisconnectEvent = boost::signals2::signal< void ( std::error_code ec ) >;
@@ -35,18 +32,15 @@ public:
     using ModelsEvent = boost::signals2::signal< void ( std::string const& slug, std::vector< Model > const& models ) >;
 
 private:
-    struct PrinterData
-    {
-        std::vector< ModelGroup > modelGroups;
-        std::vector< Model > models;
-    };
+    struct PrinterData;
+    class Impl;
 
 public:
     Frontend( boost::asio::io_context& context, Endpoint endpoint );
     Frontend( Frontend const& ) = delete;
     ~Frontend();
 
-    bool connected() const { return service_.connected(); }
+    bool connected() const;
 
     void requestPrinters();
     void requestModelGroups( std::string const& slug );
@@ -65,20 +59,7 @@ public:
     void on_models( ModelsEvent::slot_type const& handler );
 
 private:
-    void handlePrinters( std::vector< Printer >&& printers );
-    void handleModelGroups( std::string const& slug, std::vector< ModelGroup >&& modelGroups );
-    void handleModels( std::string const& slug, std::vector< Model >&& models );
-
-    Service service_;
-    optional< std::vector< Printer > > printers_;
-    std::unordered_map< std::string, PrinterData > allPrinterData_;
-    std::recursive_mutex mutex_;
-
-    ReconnectEvent on_reconnect_;
-    DisconnectEvent on_disconnect_;
-    PrintersEvent on_printers_;
-    GroupsEvent on_groups_;
-    ModelsEvent on_models_;
+    std::unique_ptr< Impl > impl_;
 };
 
 } // namespace rep

@@ -18,6 +18,7 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <utf8.h>
 
 #include "core/error.hpp"
 #include "core/logging.hpp"
@@ -116,8 +117,13 @@ public:
                 if ( field_ != body_.fields_.cend() ) {
                     ostream os { &buffer_ };
                     os << "--" << boundary_ << "\r\n"
-                       << "Content-Disposition: form-data; name=\"" << field_->first << "\"\r\n\r\n"
-                       << field_->second << "\r\n";
+                       << "Content-Disposition: form-data; name=\"" << field_->first << "\"\r\n"
+                       << "Content-Type: text/plain; charset=utf-8\r\n\r\n";
+                    for_each( field_->second.begin(), field_->second.end(),
+                              [out = ostream_iterator< uint8_t >( os )]( uint8_t ch ) {
+                        utf8::append( static_cast< uint32_t >( ch ), out );
+                    } );
+                    os << "\r\n";
                     ++field_;
                     break;
                 }

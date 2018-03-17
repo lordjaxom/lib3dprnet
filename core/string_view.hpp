@@ -1,10 +1,10 @@
 #ifndef LIB3DPRNET_CORE_STRING_VIEW_HPP
 #define LIB3DPRNET_CORE_STRING_VIEW_HPP
 
-#if __cplusplus >= 201700L
+#if __has_include( <string_view> )
 #   include <string_view>
 #   define PRNET_STRING_VIEW_NAMESPACE std
-#elif defined(__has_include) && __has_include(<experimental/string_view>)
+#elif __has_include( <experimental/string_view> )
 #   include <experimental/string_view>
 #   define PRNET_STRING_VIEW_NAMESPACE std::experimental
 #else

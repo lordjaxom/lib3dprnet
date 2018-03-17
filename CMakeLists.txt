@@ -9,6 +9,8 @@ set(Boost_DEFINITIONS BOOST_COROUTINES_NO_DEPRECATION_WARNING)
 
 find_path(json_INCLUDE_DIRS nlohmann/json.hpp HINTS "${JSON_ROOT}/include")
 
+find_path(utf8_INCLUDE_DIRS utf8.h HINTS "${UTF8_ROOT}/source")
+
 set(CMAKE_CXX_STANDARD 14)
 if(WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj -m64")
@@ -37,7 +39,7 @@ add_library(3dprnet SHARED
         repetier/frontend.hpp)
 target_compile_definitions(3dprnet PUBLIC ${Boost_DEFINITIONS})
 target_include_directories(3dprnet PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-target_include_directories(3dprnet PUBLIC ${Boost_INCLUDE_DIRS} ${json_INCLUDE_DIRS})
+target_include_directories(3dprnet PUBLIC ${Boost_INCLUDE_DIRS} ${json_INCLUDE_DIRS} ${utf8_INCLUDE_DIRS})
 if(WIN32)
 	target_link_libraries(3dprnet ${Boost_LIBRARIES} stdc++fs ws2_32)
 endif()
