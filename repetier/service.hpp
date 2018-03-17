@@ -1,20 +1,17 @@
 #ifndef LIB3DPRNET_REPETIER_CLIENT_HPP
 #define LIB3DPRNET_REPETIER_CLIENT_HPP
 
-#include <list>
+#include <functional>
 #include <memory>
 #include <string>
 #include <system_error>
-#include <vector>
 
-#include <boost/asio/io_context.hpp>
 #include <boost/signals2/signal.hpp>
-#include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 
 #include "core/config.hpp"
-#include "client.hpp"
 #include "forward.hpp"
-#include "types.hpp"
+#include "upload.hpp"
 
 namespace prnet {
 namespace rep {
@@ -26,7 +23,9 @@ namespace rep {
 class PRNET_DLL Service
 {
 public:
-	using CallbackHandler = Client::CallbackHandler;
+	using CallbackHandler = std::function< void ( nlohmann::json const& data ) >;
+
+    using Handler = std::function< void () >;
 
 	using ReconnectEvent = boost::signals2::signal< void () >;
     using DisconnectEvent = boost::signals2::signal< void ( std::error_code ec ) >;
@@ -37,30 +36,26 @@ public:
     using ModelsEvent = boost::signals2::signal< void ( std::string slug, std::vector< Model > models ) >;
 
 private:
-	struct Action
-	{
-		Action( nlohmann::json&& request, CallbackHandler&& handler );
-
-		nlohmann::json request;
-		CallbackHandler handler;
-	};
+	struct Action;
+    class Impl;
 
 public:
     Service( boost::asio::io_context& context, Endpoint endpoint );
     Service( Service const& ) = delete;
     ~Service();
 
-    bool connected() const { return connected_; }
+    bool connected() const;
 
     void request_printers();
     void request_config( std::string slug );
     void request_groups( std::string slug );
     void request_models( std::string slug );
 
-	void add_model_group( std::string slug, std::string group );
-    void delete_model_group( std::string slug, std::string group, bool deleteModels );
-    void remove_model( std::string slug, std::size_t id );
-    void move_model_to_group( std::string slug, std::size_t id, std::string group );
+	void add_model_group( std::string slug, std::string group, Handler handler = []{} );
+    void delete_model_group( std::string slug, std::string group, bool deleteModels, Handler handler = []{} );
+    void remove_model( std::string slug, std::size_t id, Handler handler = []{} );
+    void move_model_to_group( std::string slug, std::size_t id, std::string group, Handler handler = []{} );
+	void upload( model_ident ident, filesystem::path path, UploadHandler handler = []( auto ec ) {} );
 
     void on_reconnect( ReconnectEvent::slot_type const& handler );
     void on_disconnect( DisconnectEvent::slot_type const& handler );
@@ -71,30 +66,7 @@ public:
     void on_models( ModelsEvent::slot_type const& handler );
 
 private:
-    void connect();
-    void send( nlohmann::json&& request, CallbackHandler handler, bool priority = false );
-    void send_next( bool force = false );
-
-    void handle_connected();
-	void handle_login();
-	void handle_sent();
-    void handle_error( std::error_code ec );
-
-    boost::asio::io_context& context_;
-    Endpoint endpoint_;
-    std::unique_ptr< Client > client_;
-    bool connected_ {};
-	bool pending_ {};
-    std::size_t retry_ {};
-    std::list< Action > queued_;
-
-	ReconnectEvent on_reconnect_;
-	DisconnectEvent on_disconnect_;
-	TemperatureEvent on_temperature_;
-	PrintersEvent on_printers_;
-	ConfigEvent on_config_;
-	GroupsEvent on_groups_;
-	ModelsEvent on_models_;
+    std::unique_ptr< Impl > impl_;
 };
 
 } // namespace rep

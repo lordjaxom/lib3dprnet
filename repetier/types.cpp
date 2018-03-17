@@ -26,7 +26,7 @@ Endpoint::Endpoint( string host, string port, string apikey )
         , port_ { move( port ) }
         , apikey_ { move( apikey ) } {}
 
-void from_json( nlohmann::json const& src, Endpoint& dst )
+void from_json( json const& src, Endpoint& dst )
 {
     dst.host_ = src.at( "host" );
     dst.port_ = src.at( "port" );
@@ -38,7 +38,7 @@ void from_json( nlohmann::json const& src, Endpoint& dst )
  * class model_ident
  */
 
-model_ident::model_ident( std::string printer, std::string name, std::string group )
+model_ident::model_ident( string printer, string group, string name )
         : printer_ { move( printer ) }
         , name_ { move( name ) }
         , group_ { move( group ) } {}
@@ -48,7 +48,7 @@ model_ident::model_ident( std::string printer, std::string name, std::string gro
  * class ExtruderConfig
  */
 
-void from_json( nlohmann::json const& src, ExtruderConfig& dst )
+void from_json( json const& src, ExtruderConfig& dst )
 {
     dst.maxTemp_ = src.at( "maxTemp" );
 }
@@ -58,7 +58,7 @@ void from_json( nlohmann::json const& src, ExtruderConfig& dst )
  * class HeatbedConfig
  */
 
-void from_json( nlohmann::json const& src, HeatbedConfig& dst )
+void from_json( json const& src, HeatbedConfig& dst )
 {
     dst.maxTemp_ = src.at( "maxTemp" );
 }
@@ -68,7 +68,7 @@ void from_json( nlohmann::json const& src, HeatbedConfig& dst )
  * class PrinterConfig
  */
 
-void from_json( nlohmann::json const& src, PrinterConfig& dst )
+void from_json( json const& src, PrinterConfig& dst )
 {
     auto const& general = src.at( "general" );
     dst.active_ = general.at( "active" );
@@ -89,7 +89,7 @@ void from_json( nlohmann::json const& src, PrinterConfig& dst )
  * class Printer
  */
 
-bool Printer::printingJob( std::string const& job )
+bool Printer::printingJob( string const& job )
 {
     return job != "none";
 }
@@ -126,7 +126,7 @@ string_view to_string( Printer::State state )
  * class ModelGroup
  */
 
-bool ModelGroup::defaultGroup( std::string const &name )
+bool ModelGroup::defaultGroup( string const &name )
 {
     return name == "#";
 }

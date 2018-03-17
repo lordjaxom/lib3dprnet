@@ -14,13 +14,13 @@ namespace prnet {
 namespace rep {
 
 /**
- * function upload_model
+ * function uploadModel
  */
 
-using upload_callback = std::function< void( std::error_code ) >;
+using UploadHandler = std::function< void( std::error_code ec ) >;
 
-void PRNET_DLL upload_model( boost::asio::io_context& context, Endpoint const& settings, model_ident const& ident,
-                             filesystem::path const& path, upload_callback cb );
+void PRNET_DLL uploadModel( boost::asio::io_context &context, Endpoint const &settings, model_ident ident,
+                            filesystem::path path, UploadHandler handler = []( auto ec ) {} );
 
 } // namespace rep
 } // namespace prnet

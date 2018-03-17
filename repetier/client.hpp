@@ -2,18 +2,13 @@
 #define LIB3DPRNET_REPETIER_SOCKET_HPP
 
 #include <cstddef>
-#include <unordered_map>
+#include <functional>
+#include <memory>
+#include <string>
 
-#include <boost/asio/io_context.hpp>
-#include <boost/asio/ip/tcp.hpp>
-#include <boost/asio/spawn.hpp>
-#include <boost/asio/steady_timer.hpp>
-#include <boost/beast/websocket/stream.hpp>
-#include <boost/operators.hpp>
 #include <nlohmann/json_fwd.hpp>
 
 #include "core/config.hpp"
-#include "core/optional.hpp"
 #include "forward.hpp"
 #include "types.hpp"
 
@@ -33,14 +28,8 @@ public:
     using EventHandler = std::function< void ( std::string printer, nlohmann::json const& data ) >;
 
 private:
-    struct Pending
-    {
-        Pending( std::size_t callbackId, CallbackHandler&& handler, boost::asio::steady_timer&& timer );
-
-        std::size_t callbackId;
-        CallbackHandler handler;
-        boost::asio::steady_timer timer;
-    };
+    struct Pending;
+    class Impl;
 
 public:
     /**
@@ -71,24 +60,7 @@ public:
     void subscribe( std::string event, EventHandler handler );
 
 private:
-    template< typename Func > void checked_spawn( Func&& func );
-
-    void receive();
-
-    void handle_message( nlohmann::json const& message );
-    void handle_callback( std::size_t callbackId, nlohmann::json const& data );
-    void handle_event( nlohmann::json const& event );
-    void handle_error( std::error_code ec );
-    void handle_timeout( std::size_t callbackId, std::error_code ec );
-
-    boost::asio::io_context& context_;
-    ErrorHandler errorHandler_;
-
-    boost::beast::websocket::stream< boost::asio::ip::tcp::socket > stream_;
-    bool connected_ {};
-    optional< Pending > pending_;
-    std::unordered_map< std::string, EventHandler > subscriptions_;
-	std::size_t lastCallbackId_ {};
+    std::unique_ptr< Impl > impl_;
 };
 
 } // namespace rep

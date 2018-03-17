@@ -10,9 +10,11 @@
 #include <boost/signals2/signal.hpp>
 
 #include "core/config.hpp"
+#include "core/filesystem.hpp"
 #include "core/optional.hpp"
 #include "service.hpp"
 #include "types.hpp"
+#include "upload.hpp"
 
 namespace prnet {
 namespace rep {
@@ -24,6 +26,8 @@ namespace rep {
 class PRNET_DLL Frontend
 {
 public:
+    using Handler = Service::Handler;
+
     using ReconnectEvent = boost::signals2::signal< void () >;
     using DisconnectEvent = boost::signals2::signal< void ( std::error_code ec ) >;
     using PrintersEvent = boost::signals2::signal< void ( std::vector< Printer > const& printers ) >;
@@ -47,11 +51,12 @@ public:
     void requestPrinters();
     void requestModelGroups( std::string const& slug );
     void requestModels( std::string const& slug );
+    void upload( model_ident ident, filesystem::path path, UploadHandler handler = []( auto ec ) {} );
 
-    void add_model_group( std::string slug, std::string group );
-    void delete_model_group( std::string slug, std::string group, bool deleteModels );
-    void remove_model( std::string slug, std::size_t id );
-    void move_model_to_group( std::string slug, std::size_t id, std::string group );
+    void addModelGroup( std::string slug, std::string group, Handler handler = []{}  );
+    void deleteModelGroup( std::string slug, std::string group, bool deleteModels, Handler handler = []{}  );
+    void removeModel( std::string slug, std::size_t id, Handler handler = []{}  );
+    void moveModelToGroup( std::string slug, std::size_t id, std::string group, Handler handler = []{}  );
 
     void on_reconnect( ReconnectEvent::slot_type const& handler );
     void on_disconnect( DisconnectEvent::slot_type const& handler );

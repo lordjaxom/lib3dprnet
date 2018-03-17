@@ -6,6 +6,7 @@
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/ip/tcp.hpp>
+#include <boost/beast/core/buffers_to_string.hpp>
 #include <boost/beast/core/error.hpp>
 #include <boost/beast/core/file.hpp>
 #include <boost/beast/core/multi_buffer.hpp>
@@ -19,6 +20,7 @@
 #include <boost/uuid/uuid_io.hpp>
 
 #include "core/error.hpp"
+#include "core/logging.hpp"
 #include "core/string_view.hpp"
 #include "types.hpp"
 #include "upload.hpp"
@@ -33,6 +35,8 @@ using tcp = asio::ip::tcp;
 
 namespace prnet {
 namespace rep {
+
+static logger logger( "rep::Upload" );
 
 namespace detail {
 
@@ -95,6 +99,7 @@ public:
     void init( boost::beast::error_code& ec )
     {
         ec.assign( 0, ec.category() );
+
         field_ = body_.fields_.cbegin();
         if ( body_.path_ ) {
             file_.open( body_.path_->u8string().c_str(), boost::beast::file_mode::read, ec );
@@ -116,7 +121,6 @@ public:
                     ++field_;
                     break;
                 }
-
                 ++state_;
                 // fall through
             }
@@ -177,13 +181,13 @@ private:
 
 
 /**
- * function upload_model
+ * function uploadModel
  */
 
-void upload_model( boost::asio::io_context& context, Endpoint const& settings, model_ident const& ident,
-                   prnet::filesystem::path const& path, upload_callback cb )
+void uploadModel( boost::asio::io_context& context, Endpoint const& settings, model_ident ident,
+                  filesystem::path path, UploadHandler handler )
 {
-    asio::spawn( context, [&, cb { move( cb ) }]( auto yield ) {
+    asio::spawn( context, [&context, &settings, ident = move( ident ), path = move( path ), handler = move( handler )]( auto yield ) {
         error_code ec;
         try {
             tcp::resolver resolver { context };
@@ -210,11 +214,13 @@ void upload_model( boost::asio::io_context& context, Endpoint const& settings, m
                 ec = make_error_code( prnet_errc::server_error );
             }
         } catch ( system_error const& e ) {
+            logger.error( "error: ", e.code().message() );
             ec = e.code();
         } catch ( boost::beast::system_error const& e ) {
+            logger.error( "error: ", e.code().message() );
             ec = e.code();
         }
-        cb( ec );
+        handler( ec );
     } );
 }
 
