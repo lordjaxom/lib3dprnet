@@ -18,27 +18,28 @@ if(WIN32)
 endif()
 
 add_library(3dprnet SHARED
-        core/config.hpp
-        core/error.cpp
-        core/error.hpp
-        core/filesystem.hpp
-        core/logging.cpp
-        core/logging.hpp
-        core/optional.hpp
-        core/string_view.hpp
-        repetier/service.cpp
-        repetier/service.hpp
-        repetier/forward.hpp
-        repetier/client.cpp
-        repetier/client.hpp
-        repetier/types.cpp
-        repetier/types.hpp
-        repetier/upload.cpp
-        repetier/upload.hpp
-        repetier/frontend.cpp
-        repetier/frontend.hpp)
+        include/3dprnet/core/config.hpp
+        src/core/error.cpp
+        include/3dprnet/core/error.hpp
+        include/3dprnet/core/filesystem.hpp
+        src/core/logging.cpp
+        include/3dprnet/core/logging.hpp
+        include/3dprnet/core/optional.hpp
+        include/3dprnet/core/string_view.hpp
+        src/repetier/service.cpp
+        include/3dprnet/repetier/service.hpp
+        include/3dprnet/repetier/forward.hpp
+        src/repetier/client.cpp
+        include/3dprnet/repetier/client.hpp
+        src/repetier/types.cpp
+        include/3dprnet/repetier/types.hpp
+        src/repetier/upload.cpp
+        include/3dprnet/repetier/upload.hpp
+        src/repetier/frontend.cpp
+        include/3dprnet/repetier/frontend.hpp 
+        src/core/filesystem.cpp)
 target_compile_definitions(3dprnet PUBLIC ${Boost_DEFINITIONS})
-target_include_directories(3dprnet PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(3dprnet PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
 target_include_directories(3dprnet PUBLIC ${Boost_INCLUDE_DIRS} ${json_INCLUDE_DIRS} ${utf8_INCLUDE_DIRS})
 if(WIN32)
 	target_link_libraries(3dprnet ${Boost_LIBRARIES} stdc++fs ws2_32)

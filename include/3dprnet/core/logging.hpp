@@ -8,7 +8,7 @@
 #include <string>
 #include <utility>
 
-#include "config.hpp"
+#include "3dprnet/core/config.hpp"
 
 namespace prnet {
 

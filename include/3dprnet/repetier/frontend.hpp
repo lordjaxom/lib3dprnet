@@ -9,9 +9,9 @@
 #include <boost/asio/io_context.hpp>
 #include <boost/signals2/signal.hpp>
 
-#include "core/config.hpp"
-#include "types.hpp"
-#include "upload.hpp"
+#include "3dprnet/core/config.hpp"
+#include "3dprnet/repetier/types.hpp"
+#include "3dprnet/repetier/upload.hpp"
 
 namespace prnet {
 namespace rep {

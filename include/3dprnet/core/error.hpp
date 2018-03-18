@@ -4,7 +4,7 @@
 #include <system_error>
 #include <type_traits>
 
-#include "config.hpp"
+#include "3dprnet/core/config.hpp"
 
 namespace prnet {
 

@@ -1,6 +1,10 @@
 #ifndef LIB3DPRNET_CORE_FILESYSTEM_HPP
 #define LIB3DPRNET_CORE_FILESYSTEM_HPP
 
+#include <string>
+
+#include "3dprnet/core/config.hpp"
+
 #if __has_include( <filesystem> )
 #   include <filesystem>
 #   define PRNET_FILESYSTEM_NAMESPACE std::filesystem
@@ -13,9 +17,13 @@
 #endif
 
 namespace prnet {
+namespace filesystem {
 
-namespace filesystem = PRNET_FILESYSTEM_NAMESPACE;
+using namespace PRNET_FILESYSTEM_NAMESPACE;
 
+std::string PRNET_DLL native_path( path const& path );
+
+} // namespace filesystem
 } // namespace prnet
 
 #undef PRNET_FILESYSTEM_NAMESPACE

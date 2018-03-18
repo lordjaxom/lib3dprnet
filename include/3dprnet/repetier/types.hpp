@@ -7,9 +7,9 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-#include "core/config.hpp"
-#include "core/optional.hpp"
-#include "core/string_view.hpp"
+#include "3dprnet/core/config.hpp"
+#include "3dprnet/core/optional.hpp"
+#include "3dprnet/core/string_view.hpp"
 
 namespace prnet {
 namespace rep {

@@ -15,11 +15,11 @@
 #include <boost/beast/websocket/stream.hpp>
 #include <nlohmann/json.hpp>
 
-#include "core/error.hpp"
-#include "core/logging.hpp"
-#include "core/optional.hpp"
-#include "client.hpp"
-#include "types.hpp"
+#include "3dprnet/core/error.hpp"
+#include "3dprnet/core/logging.hpp"
+#include "3dprnet/core/optional.hpp"
+#include "3dprnet/repetier/client.hpp"
+#include "3dprnet/repetier/types.hpp"
 
 using namespace std;
 using namespace nlohmann;
@@ -203,7 +203,6 @@ private:
     void handle_timeout( size_t callbackId, error_code ec )
     {
         if ( ec == make_error_code( asio::error::operation_aborted ) ) {
-            logger.debug( "timer for callback ", callbackId, " was canceled" );
             return;
         }
 

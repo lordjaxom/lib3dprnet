@@ -10,7 +10,7 @@
 #   include <unistd.h>
 #endif
 
-#include "logging.hpp"
+#include "3dprnet/core/logging.hpp"
 
 using namespace std;
 

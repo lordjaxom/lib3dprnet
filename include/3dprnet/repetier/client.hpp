@@ -8,9 +8,9 @@
 
 #include <nlohmann/json_fwd.hpp>
 
-#include "core/config.hpp"
-#include "forward.hpp"
-#include "types.hpp"
+#include "3dprnet/core/config.hpp"
+#include "3dprnet/repetier/forward.hpp"
+#include "3dprnet/repetier/types.hpp"
 
 namespace prnet {
 namespace rep {

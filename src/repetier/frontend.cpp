@@ -2,10 +2,10 @@
 #include <unordered_map>
 #include <utility>
 
-#include "core/optional.hpp"
-#include "frontend.hpp"
-#include "service.hpp"
-#include "types.hpp"
+#include "3dprnet/core/optional.hpp"
+#include "3dprnet/repetier/frontend.hpp"
+#include "3dprnet/repetier/service.hpp"
+#include "3dprnet/repetier/types.hpp"
 
 using namespace std;
 

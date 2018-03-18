@@ -7,12 +7,12 @@
 #include <boost/asio/steady_timer.hpp>
 #include <nlohmann/json.hpp>
 
-#include "core/error.hpp"
-#include "core/logging.hpp"
-#include "client.hpp"
-#include "service.hpp"
-#include "types.hpp"
-#include "upload.hpp"
+#include "3dprnet/core/error.hpp"
+#include "3dprnet/core/logging.hpp"
+#include "3dprnet/repetier/client.hpp"
+#include "3dprnet/repetier/service.hpp"
+#include "3dprnet/repetier/types.hpp"
+#include "3dprnet/repetier/upload.hpp"
 
 using namespace std;
 using namespace nlohmann;
@@ -243,7 +243,6 @@ private:
 
     void send_next( bool force = false )
     {
-        logger.debug( "send_next( ", force, " ): connected_ = ", connected_, ", pending_ = ", pending_, ", queued_ = ", queued_.size() );
         if ( ( connected_ || force ) && !pending_ && !queued_.empty() ) {
             auto& action = queued_.front();
             client_->send( action.request, [this, &action]( auto const& data ) {

@@ -10,9 +10,9 @@
 #include <boost/signals2/signal.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-#include "core/config.hpp"
-#include "forward.hpp"
-#include "upload.hpp"
+#include "3dprnet/core/config.hpp"
+#include "3dprnet/repetier/forward.hpp"
+#include "3dprnet/repetier/upload.hpp"
 
 namespace prnet {
 namespace rep {

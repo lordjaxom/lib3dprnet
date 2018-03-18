@@ -6,9 +6,9 @@
 
 #include <boost/asio/io_context.hpp>
 
-#include "core/config.hpp"
-#include "core/filesystem.hpp"
-#include "forward.hpp"
+#include "3dprnet/core/config.hpp"
+#include "3dprnet/core/filesystem.hpp"
+#include "3dprnet/repetier/forward.hpp"
 
 namespace prnet {
 namespace rep {
