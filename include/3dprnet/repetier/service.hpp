@@ -38,7 +38,7 @@ public:
 
 private:
 	struct Action;
-    class Impl;
+    class ServiceImpl;
 
 public:
     Service( boost::asio::io_context& context, Endpoint endpoint );
@@ -51,12 +51,13 @@ public:
     void request_config( std::string slug );
     void request_groups( std::string slug );
     void request_models( std::string slug );
+    void upload( model_ident ident, filesystem::path path, UploadHandler handler = []( auto ec ) {} );
 
-	void add_model_group( std::string slug, std::string group, Handler handler = []{} );
-    void delete_model_group( std::string slug, std::string group, bool deleteModels, Handler handler = []{} );
-    void remove_model( std::string slug, std::size_t id, Handler handler = []{} );
-    void move_model_to_group( std::string slug, std::size_t id, std::string group, Handler handler = []{} );
-	void upload( model_ident ident, filesystem::path path, UploadHandler handler = []( auto ec ) {} );
+	void addModelGroup( std::string slug, std::string group, Handler handler = [] {} );
+    void deleteModelGroup( std::string slug, std::string group, bool deleteModels, Handler handler = [] {} );
+    void removeModel( std::string slug, std::size_t id, Handler handler = [] {} );
+    void moveModelToGroup( std::string slug, std::size_t id, std::string group, Handler handler = [] {} );
+    void sendCommand( std::string slug, std::string command, Handler handler = []{} );
 
     void on_reconnect( ReconnectEvent::slot_type const& handler );
     void on_disconnect( DisconnectEvent::slot_type const& handler );
@@ -67,7 +68,7 @@ public:
     void on_models( ModelsEvent::slot_type const& handler );
 
 private:
-    std::unique_ptr< Impl > impl_;
+    std::unique_ptr< ServiceImpl > impl_;
 };
 
 } // namespace rep

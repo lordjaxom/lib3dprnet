@@ -29,11 +29,11 @@ struct Frontend::PrinterData
     std::vector< Model > models;
 };
     
-class Frontend::Impl
+class Frontend::FrontendImpl
 {
 public:
-    Impl( boost::asio::io_context& context, Endpoint&& endpoint )
-            : service_( context, move( endpoint ) )
+    FrontendImpl( Service& service )
+            : service_( service )
     {
         service_.on_disconnect( [this]( auto ec ) { on_disconnect_( ec ); } );
         service_.on_printers( [this]( auto printers ) { this->handlePrinters( move( printers ) ); } );
@@ -41,8 +41,6 @@ public:
         service_.on_models( [this]( auto slug, auto models ) { this->handleModels( slug, move( models ) ); } );
         service_.request_printers();
     }
-
-    bool connected() const { return service_.connected(); }
 
     void requestPrinters()
     {
@@ -71,31 +69,6 @@ public:
         if ( printerData != allPrinterData_.end() ) {
             on_models_( slug, printerData->second.models );
         }
-    }
-    
-    void addModelGroup( string&& slug, string&& group, Handler&& handler )
-    {
-        service_.add_model_group( move( slug ), move( group ), move( handler ) );
-    }
-
-    void deleteModelGroup( string&& slug, string&& group, bool deleteModels, Handler&& handler )
-    {
-        service_.delete_model_group( move( slug ), move( group ), deleteModels, move( handler ) );
-    }
-
-    void removeModel( string&& slug, size_t id, Handler&& handler )
-    {
-        service_.remove_model( move( slug ), id, move( handler ) );
-    }
-
-    void moveModelToGroup( string&& slug, size_t id, string&& group, Handler&& handler )
-    {
-        service_.move_model_to_group( move( slug ), id, move( group ), move( handler ) );
-    }
-
-    void upload( model_ident&& ident, filesystem::path&& path, UploadHandler&& handler )
-    {
-        service_.upload( move( ident ), move( path ), move( handler ) );
     }
 
     void on_reconnect( ReconnectEvent::slot_type const& handler )
@@ -164,7 +137,7 @@ private:
         on_models_( slug, printerData.models );
     }
 
-    Service service_;
+    Service& service_;
     optional< std::vector< Printer > > printers_;
     std::unordered_map< std::string, PrinterData > allPrinterData_;
     std::recursive_mutex mutex_;
@@ -177,11 +150,10 @@ private:
 };
 
 Frontend::Frontend( boost::asio::io_context& context, Endpoint endpoint )
-        : impl_( make_unique< Impl >( context, move( endpoint ) ) ) {}
+        : Service( context, move( endpoint ) )
+        , impl_( make_unique< FrontendImpl >( static_cast< Service& >( *this ) ) ) {}
 
 Frontend::~Frontend() = default;
-
-bool Frontend::connected() const { return impl_->connected(); }
 
 void Frontend::requestPrinters()
 {
@@ -196,31 +168,6 @@ void Frontend::requestModelGroups( string const& slug )
 void Frontend::requestModels( string const& slug )
 {
     impl_->requestModels( slug );
-}
-    
-void Frontend::addModelGroup( string slug, string group, Handler handler )
-{
-    impl_->addModelGroup( move( slug ), move( group ), move( handler ) );
-}
-
-void Frontend::deleteModelGroup( string slug, string group, bool deleteModels, Handler handler )
-{
-    impl_->deleteModelGroup( move( slug ), move( group ), deleteModels, move( handler ) );
-}
-
-void Frontend::removeModel( string slug, size_t id, Handler handler )
-{
-    impl_->removeModel( move( slug ), id, move( handler ) );
-}
-
-void Frontend::moveModelToGroup( string slug, size_t id, string group, Handler handler )
-{
-    impl_->moveModelToGroup( move( slug ), id, move( group ), move( handler ) );
-}
-
-void Frontend::upload( model_ident ident, filesystem::path path, UploadHandler handler )
-{
-    impl_->upload( move( ident ), move( path ), move( handler ) );
 }
 
 void Frontend::on_reconnect( ReconnectEvent::slot_type const& handler )

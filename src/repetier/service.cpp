@@ -76,10 +76,10 @@ struct Service::Action
     CallbackHandler handler;
 };
     
-class Service::Impl
+class Service::ServiceImpl
 {
 public:
-    Impl( boost::asio::io_context& context, Endpoint&& endpoint )
+    ServiceImpl( boost::asio::io_context& context, Endpoint&& endpoint )
             : context_( context )
             , endpoint_( move( endpoint ) )
     {
@@ -136,7 +136,7 @@ public:
         } );
     }
 
-    void add_model_group( string&& slug, string&& group, Handler&& handler )
+    void addModelGroup( string &&slug, string &&group, Handler &&handler )
     {
         auto request = detail::makeRequest( "addModelGroup", move( slug ) );
         request[ "data" ].emplace( "groupName", move( group ) );
@@ -146,7 +146,7 @@ public:
         } );
     }
 
-    void delete_model_group( string&& slug, string&& group, bool deleteModels, Handler&& handler )
+    void deleteModelGroup( string &&slug, string &&group, bool deleteModels, Handler &&handler )
     {
         auto request = detail::makeRequest( "delModelGroup", move( slug ) );
         request[ "data" ].emplace( "groupName", move( group ) );
@@ -157,7 +157,7 @@ public:
         } );
     }
 
-    void remove_model( string&& slug, size_t id, Handler&& handler )
+    void removeModel( string &&slug, size_t id, Handler &&handler )
     {
         auto request = detail::makeRequest( "removeModel", move( slug ) );
         request[ "data" ].emplace( "id", id );
@@ -166,13 +166,22 @@ public:
         } );
     }
 
-    void move_model_to_group( string&& slug, size_t id, string&& group, Handler&& handler )
+    void moveModelToGroup( string &&slug, size_t id, string &&group, Handler &&handler )
     {
         auto request = detail::makeRequest( "moveModelFileToGroup", move( slug ) );
         request[ "data" ].emplace( "id", id );
         request[ "data" ].emplace( "groupName", move( group ) );
         send( move( request ), [this, handler = move( handler )]( auto const& data ) {
             detail::checkResponseOk( data );
+            handler();
+        } );
+    }
+
+    void sendCommand( string&& slug, string&& command, Handler&& handler )
+    {
+        auto request = detail::makeRequest( "send", move( slug ) );
+        request[ "data" ].emplace( "cmd", move( command ) );
+        send( move( request ), [this, handler = move( handler )]( auto const& data ) {
             handler();
         } );
     }
@@ -315,7 +324,7 @@ private:
 };
 
 Service::Service( asio::io_context &context, Endpoint endpoint )
-        : impl_( make_unique< Impl >( context, move( endpoint ) ) ) {}
+        : impl_( make_unique< ServiceImpl >( context, move( endpoint ) ) ) {}
 
 Service::~Service() = default;
 
@@ -341,29 +350,34 @@ void Service::request_models( string slug )
     impl_->request_models( move( slug ) );
 }
 
-void Service::add_model_group( string slug, string group, Handler handler )
-{
-    impl_->add_model_group( move( slug ), move( group ), move( handler ) );
-}
-
-void Service::delete_model_group( string slug, string group, bool deleteModels, Handler handler )
-{
-    impl_->delete_model_group( move( slug ), move( group ), deleteModels, move( handler ) );
-}
-
-void Service::remove_model( string slug, size_t id, Handler handler )
-{
-    impl_->remove_model( move( slug ), id, move( handler ) );
-}
-
-void Service::move_model_to_group( string slug, size_t id, string group, Handler handler )
-{
-    impl_->move_model_to_group( move( slug ), id, move( group ), move( handler ) );
-}
-
 void Service::upload( model_ident ident, filesystem::path path, UploadHandler handler )
 {
     impl_->upload( move( ident ), move( path ), move( handler ) );
+}
+
+void Service::addModelGroup( string slug, string group, Handler handler )
+{
+    impl_->addModelGroup( move( slug ), move( group ), move( handler ));
+}
+
+void Service::deleteModelGroup( string slug, string group, bool deleteModels, Handler handler )
+{
+    impl_->deleteModelGroup( move( slug ), move( group ), deleteModels, move( handler ));
+}
+
+void Service::removeModel( string slug, size_t id, Handler handler )
+{
+    impl_->removeModel( move( slug ), id, move( handler ));
+}
+
+void Service::moveModelToGroup( string slug, size_t id, string group, Handler handler )
+{
+    impl_->moveModelToGroup( move( slug ), id, move( group ), move( handler ));
+}
+
+void Service::sendCommand( string slug, string command, Handler handler )
+{
+    impl_->sendCommand( move( slug ), move( command ), move( handler ) );
 }
 
 void Service::on_reconnect( ReconnectEvent::slot_type const& handler )

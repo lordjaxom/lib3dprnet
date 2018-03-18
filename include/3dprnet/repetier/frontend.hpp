@@ -10,6 +10,7 @@
 #include <boost/signals2/signal.hpp>
 
 #include "3dprnet/core/config.hpp"
+#include "3dprnet/repetier/service.hpp"
 #include "3dprnet/repetier/types.hpp"
 #include "3dprnet/repetier/upload.hpp"
 
@@ -21,36 +22,39 @@ namespace rep {
  */
 
 class PRNET_DLL Frontend
+        : private Service
 {
 public:
-    using Handler = std::function< void () >;
+    using Service::Handler;
 
-    using ReconnectEvent = boost::signals2::signal< void () >;
-    using DisconnectEvent = boost::signals2::signal< void ( std::error_code ec ) >;
-    using PrintersEvent = boost::signals2::signal< void ( std::vector< Printer > const& printers ) >;
-    using GroupsEvent = boost::signals2::signal< void ( std::string const& slug, std::vector< ModelGroup > const& groups ) >;
-    using ModelsEvent = boost::signals2::signal< void ( std::string const& slug, std::vector< Model > const& models ) >;
+    using Service::ReconnectEvent;
+    using Service::DisconnectEvent;
+    using Service::PrintersEvent;
+    using Service::GroupsEvent;
+    using Service::ModelsEvent;
 
 private:
     struct PrinterData;
-    class Impl;
+    class FrontendImpl;
 
 public:
     Frontend( boost::asio::io_context& context, Endpoint endpoint );
     Frontend( Frontend const& ) = delete;
     ~Frontend();
 
-    bool connected() const;
+    using Service::connected;
 
     void requestPrinters();
     void requestModelGroups( std::string const& slug );
     void requestModels( std::string const& slug );
-    void upload( model_ident ident, filesystem::path path, UploadHandler handler = []( auto ec ) {} );
 
-    void addModelGroup( std::string slug, std::string group, Handler handler = []{}  );
-    void deleteModelGroup( std::string slug, std::string group, bool deleteModels, Handler handler = []{}  );
-    void removeModel( std::string slug, std::size_t id, Handler handler = []{}  );
-    void moveModelToGroup( std::string slug, std::size_t id, std::string group, Handler handler = []{}  );
+    using Service::upload;
+
+    using Service::addModelGroup;
+    using Service::deleteModelGroup;
+    using Service::removeModel;
+    using Service::moveModelToGroup;
+    using Service::sendCommand;
 
     void on_reconnect( ReconnectEvent::slot_type const& handler );
     void on_disconnect( DisconnectEvent::slot_type const& handler );
@@ -59,7 +63,7 @@ public:
     void on_models( ModelsEvent::slot_type const& handler );
 
 private:
-    std::unique_ptr< Impl > impl_;
+    std::unique_ptr< FrontendImpl > impl_;
 };
 
 } // namespace rep

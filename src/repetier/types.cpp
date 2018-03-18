@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 #include <utf8.h>
 
+#include "3dprnet/core/encoding.hpp"
 #include "3dprnet/core/error.hpp"
 #include "3dprnet/core/logging.hpp"
 #include "3dprnet/repetier/types.hpp"
@@ -14,21 +15,6 @@ namespace prnet {
 namespace rep {
 
 static Logger logger( "rep::types" );
-
-namespace detail {
-
-string utf8_to_native( string const& value )
-{
-    string result;
-    result.reserve( value.length() );
-    for ( auto it = value.begin() ; it != value.end() ; ) {
-        uint32_t cp = utf8::next( it, value.end() );
-        result.push_back( cp < 256 ? static_cast< char >( static_cast< uint8_t >( cp ) ) : '_' );
-    }
-    return move( result );
-}
-
-} // namespace detail
 
 /**
  * class Endpoint
@@ -43,9 +29,9 @@ Endpoint::Endpoint( string host, string port, string apikey )
 
 void from_json( json const& src, Endpoint& dst )
 {
-    dst.host_ = detail::utf8_to_native( src.at( "host" ) );
+    dst.host_ = enc::convert< enc::ToUtf8 >( src.at( "host" ) );
     dst.port_ = src.at( "port" );
-    dst.apikey_ = detail::utf8_to_native( src.at( "apikey" ) );
+    dst.apikey_ = enc::convert< enc::ToUtf8 >( src.at( "apikey" ) );
 }
 
 
@@ -87,9 +73,9 @@ void from_json( json const& src, PrinterConfig& dst )
 {
     auto const& general = src.at( "general" );
     dst.active_ = general.at( "active" );
-    dst.slug_ = detail::utf8_to_native( general.at( "slug" ) );
-    dst.name_ = detail::utf8_to_native( general.at( "name" ) );
-    dst.firmwareName_ = detail::utf8_to_native( general.at( "firmwareName" ) );
+    dst.slug_ = enc::convert< enc::ToUtf8 >( general.at( "slug" ) );
+    dst.name_ = enc::convert< enc::ToUtf8 >( general.at( "name" ) );
+    dst.firmwareName_ = enc::convert< enc::ToUtf8 >( general.at( "firmwareName" ) );
 
     dst.extruders_ = src.at( "extruders" ).get< vector< ExtruderConfig > >();
 
@@ -120,10 +106,10 @@ Printer::State Printer::state() const
 void from_json( json const& src, Printer& dst )
 {
     dst.active_ = src.at( "active" );
-    dst.name_ = detail::utf8_to_native( src.at( "name" ) );
-    dst.slug_ = detail::utf8_to_native( src.at( "slug" ) );
+    dst.name_ = enc::convert< enc::ToUtf8 >( src.at( "name" ) );
+    dst.slug_ = enc::convert< enc::ToUtf8 >( src.at( "slug" ) );
     dst.online_ = src.at( "online" ) != 0;
-    dst.job_ = detail::utf8_to_native( src.at( "job" ) );
+    dst.job_ = enc::convert< enc::ToUtf8 >( src.at( "job" ) );
 }
 
 string_view to_string( Printer::State state )
@@ -148,7 +134,7 @@ bool ModelGroup::defaultGroup( string const &name )
 
 void from_json( json const& src, ModelGroup& dst )
 {
-    dst.name_ = detail::utf8_to_native( src );
+    dst.name_ = enc::convert< enc::ToUtf8 >( src );
 }
 
 
@@ -159,8 +145,8 @@ void from_json( json const& src, ModelGroup& dst )
 void from_json( json const& src, Model& dst )
 {
     dst.id_ = src.at( "id" );
-    dst.name_ = detail::utf8_to_native( src.at( "name" ) );
-    dst.modelGroup_ = detail::utf8_to_native( src.at( "group" ) );
+    dst.name_ = enc::convert< enc::ToUtf8 >( src.at( "name" ) );
+    dst.modelGroup_ = enc::convert< enc::ToUtf8 >( src.at( "group" ) );
     dst.created_ = src.at( "created" ).get< size_t >() / 1000;
     dst.length_ = src.at( "length" );
     dst.layers_ = src.at( "layer" );

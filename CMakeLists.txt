@@ -37,7 +37,9 @@ add_library(3dprnet SHARED
         include/3dprnet/repetier/upload.hpp
         src/repetier/frontend.cpp
         include/3dprnet/repetier/frontend.hpp 
-        src/core/filesystem.cpp)
+        src/core/filesystem.cpp
+        include/3dprnet/core/encoding.hpp
+        src/core/encoding.cpp)
 target_compile_definitions(3dprnet PUBLIC ${Boost_DEFINITIONS})
 target_include_directories(3dprnet PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
 target_include_directories(3dprnet PUBLIC ${Boost_INCLUDE_DIRS} ${json_INCLUDE_DIRS} ${utf8_INCLUDE_DIRS})
