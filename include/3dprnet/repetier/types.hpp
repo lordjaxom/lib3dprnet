@@ -129,8 +129,10 @@ public:
         disabled, offline, idle, printing
     };
 
+    bool active() const { return active_; }
     std::string const& name() const { return name_; }
     std::string const& slug() const { return slug_; }
+    bool online() const { return online_; }
     std::string const& job() const { return job_; }
 
     State state() const;
