@@ -22,7 +22,7 @@ namespace rep {
  */
 
 class PRNET_DLL Frontend
-        : private Service
+        : Service
 {
 public:
     using Service::Handler;
