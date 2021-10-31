@@ -5,7 +5,10 @@ cmake_host_system_information(RESULT HOSTNAME QUERY HOSTNAME)
 include("CMakeLocal.${HOSTNAME}.cmake")
 
 find_package(Boost 1.66.0 COMPONENTS system coroutine REQUIRED)
-set(Boost_DEFINITIONS BOOST_COROUTINES_NO_DEPRECATION_WARNING)
+set(Boost_DEFINITIONS
+        BOOST_COROUTINES_NO_DEPRECATION_WARNING
+        BOOST_BEAST_ALLOW_DEPRECATED
+)
 
 find_path(json_INCLUDE_DIRS nlohmann/json.hpp HINTS "${JSON_ROOT}/include")
 

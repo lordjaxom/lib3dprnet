@@ -5,7 +5,7 @@
 
 #include "3dprnet/core/config.hpp"
 
-#if __has_include( <filesystem> )
+#if __cplusplus >= 201703L
 #   include <filesystem>
 #   define PRNET_FILESYSTEM_NAMESPACE std::filesystem
 #elif __has_include( <experimental/filesystem> )
