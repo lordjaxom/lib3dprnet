@@ -64,5 +64,5 @@ endfunction()
 
 # add_test_executable(test_upload test/upload.cpp)
 # add_test_executable(test_login test/login.cpp)
-add_test_executable(test_printers test/printers.cpp)
+# add_test_executable(test_printers test/printers.cpp)
 # add_test_executable(test_watch test/watch.cpp)
